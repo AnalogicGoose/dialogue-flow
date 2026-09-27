@@ -27,7 +27,7 @@
 - [x] Phase 4 — Generic dialogue UI
 - [x] Phase 5 — True branching
 - [x] Phase 6 — Branch convergence
-- [ ] Phase 7 — Outgoing events
+- [x] Phase 7 — Outgoing events
 - [ ] Phase 8 — Incoming events
 - [ ] Phase 9 — State & conditions
 - [ ] Phase 10 — Additional flow nodes
@@ -351,12 +351,12 @@ Allow dialogue to affect external systems without knowing what those systems are
 
 ## Tasks
 
-- [ ] Implement `Event`.
-- [ ] Give events a `StringName`/identifier.
-- [ ] Support optional payload data.
-- [ ] Emit a generic event signal from the runtime.
-- [ ] Continue graph traversal after event emission.
-- [ ] Keep game-specific actions outside the dialogue module.
+- [x] Implement `Event`. (`EventNode`, `dialogue-flow-rust/src/resources/event.rs`)
+- [x] Give events a `StringName`/identifier. (`event_name: StringName`)
+- [x] Support optional payload data. (`payload: Dictionary<GString, Variant>`, defaults empty)
+- [x] Emit a generic event signal from the runtime. (`event_emitted(event_name, payload)`)
+- [x] Continue graph traversal after event emission. (never pauses, same automatic pattern as `Entry`/`Response`)
+- [x] Keep game-specific actions outside the dialogue module. (the runtime only carries the name/payload — it never interprets what "give_key" means)
 
 ## Example
 
@@ -382,7 +382,18 @@ InventorySystem
 
 ## Milestone
 
-- [ ] A conversation can trigger an unrelated game system without directly depending on it.
+- [x] A conversation can trigger an unrelated game system without directly depending on it.
+
+Verified with `dev/dialogue_data/test_events.tres`: `Entry → Event("give_key", {"amount": 1}) → Speech → End`,
+driven directly through `DialogueController` and confirmed against the
+real project. `event_emitted` carries the name and payload correctly and
+traversal continues normally — no game-specific logic lives in the
+runtime or the node itself.
+
+Note: the payload-identification gap flagged in Phase 14's Observability
+section doesn't apply to `Event` — `event_emitted` already carries what's
+needed (name + payload). It's `dialogue_finished`/`node_entered`/`node_exited`
+that are the actual gap, not this signal.
 
 ---
 

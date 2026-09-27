@@ -235,7 +235,8 @@ Current project structure:
 │       └── dialogue_data/
 │           ├── test_conversation.tres
 │           ├── test_branching.tres
-│           └── test_convergence.tres
+│           ├── test_convergence.tres
+│           └── test_events.tres
 │
 ├── dialogue-flow-rust/
 │   ├── Cargo.lock
@@ -250,6 +251,7 @@ Current project structure:
 │       │   ├── speech.rs
 │       │   ├── response.rs
 │       │   ├── end.rs
+│       │   ├── event.rs
 │       │   └── graph.rs
 │       └── runtime/
 │           └── mod.rs
@@ -366,8 +368,8 @@ The roadmap is the project's source of truth and contains:
 
 ## Current Status
 
-**Phases 0-6 are complete.** The project is moving into
-**Phase 7 — Outgoing Events**.
+**Phases 0-7 are complete.** The project is moving into
+**Phase 8 — Incoming Events**.
 
 Completed so far:
 
@@ -393,6 +395,7 @@ Completed so far:
 - [x] Full conversation played manually through the Godot UI, start to `End`
 - [x] True branching verified: a single `Speech` with two `Response`s leads to two fully separate tails, confirmed to diverge correctly end-to-end
 - [x] Branch convergence verified: independent branches reunite into the same node with no `MergeNode`, then branch again from the merge point
+- [x] `EventNode` implemented: fires a named event with an optional payload (`event_emitted`) and continues traversal automatically, with no game-specific logic in the dialogue module
 
 ---
 

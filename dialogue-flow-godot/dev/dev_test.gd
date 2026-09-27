@@ -6,6 +6,7 @@ func _ready() -> void:
 	controller.dialogue_started.connect(func(): print("-- dialogue_started --"))
 	controller.dialogue_finished.connect(func(): print("-- dialogue_finished --"))
 	controller.dialogue_cancelled.connect(func(): print("-- dialogue_cancelled --"))
+	controller.event_emitted.connect(func(event_name, payload): print("EVENT: %s %s" % [event_name, payload]))
 	controller.speech_changed.connect(_on_speech_changed)
 	controller.responses_changed.connect(_on_responses_changed)
 	

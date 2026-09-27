@@ -10,7 +10,7 @@ use std::collections::HashMap;
 use godot::classes::{Node, Resource};
 use godot::prelude::*;
 
-use crate::resources::{ConversationGraph, EndNode, EntryNode, ResponseNode, SpeechNode};
+use crate::resources::{ConversationGraph, EndNode, EntryNode, EventNode,ResponseNode, SpeechNode};
 
 const MAX_AUTOMATIC_STEPS: u32 = 1000;
 
@@ -59,6 +59,8 @@ impl DialogueController {
     fn speech_changed(speaker: GString, text: GString);
     #[signal]
     fn responses_changed(response_texts: Array<GString>);
+    #[signal]
+    fn event_emitted(event_name: StringName, payload: Dictionary<GString, Variant>);
 
     /// Resets state, finds the graph's `EntryNode`, and traverses until the
     /// first pausing node or `End`.
@@ -194,6 +196,21 @@ impl DialogueController {
                     .emit_signal("responses_changed", &[response_texts.to_variant()]);
                 // Pauses here until choose() is called.
             }
+        } else if class == "EventNode" {
+            let event = node.try_cast::<EventNode>().unwrap();
+            let (event_name, payload, next_id) = {
+                let bound = event.bind();
+                (
+                    bound.event_name.clone(),
+                    bound.payload.clone(),
+                    bound.next_id.clone(),
+                )
+            };
+            self.base_mut().emit_signal(
+                "event_emitted",
+                &[event_name.to_variant(), payload.to_variant()],
+            );
+            self.enter(next_id, steps + 1);
         } else if class == "ResponseNode" {
             let next_id = node
                 .try_cast::<ResponseNode>()
