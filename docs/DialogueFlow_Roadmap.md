@@ -20,7 +20,7 @@
 - [x] Conversation content must not be hardcoded in Rust
 - [x] Visual Godot authoring is the end goal
 
-- [ ] Phase 0 — Naming & project skeleton
+- [x] Phase 0 — Naming & project skeleton
 - [ ] Phase 1 — Graph specification
 - [ ] Phase 2 — Core conversation Resources
 - [ ] Phase 3 — Runtime controller
@@ -65,31 +65,30 @@
 ## Goals
 
 - [x] Choose final project/module name.
-- [ ] Choose final runtime object terminology.
+- [x] Choose final runtime object terminology.
 - [x] Create a clean Godot project.
 - [x] Create a clean Rust crate/module.
 - [x] Configure `godot-rust 0.5.5`.
 - [x] Enable `register-docs`.
-- [ ] Establish folder/module structure.
-- [ ] Establish Godot-facing documentation rules.
-- [ ] Verify a minimal Rust class loads correctly in Godot.
+- [x] Establish folder/module structure.
+- [x] Establish Godot-facing documentation rules.
+- [x] Verify a minimal Rust class loads correctly in Godot.
 
 ## Working Terminology
 
-Current temporary names:
+Final names:
 
 - Project/system: `DialogueFlow`
 - Runtime object: `DialogueController`
 
-Possible runtime alternatives:
-
-- `DialogueRunner`
-- `DialogueHost`
-- `ConversationRunner`
+The Rust crate is now split into `graph/`, `resources/`, and `runtime/`
+modules (each a `mod.rs`), matching the architecture split in the README.
+Godot-facing documentation rules are written up in
+[`documentation-guidelines.md`](./documentation-guidelines.md).
 
 ## Milestone
 
-- [ ] Empty reusable dialogue module loads in Godot without errors.
+- [x] Empty reusable dialogue module loads in Godot without errors.
 
 ---
 

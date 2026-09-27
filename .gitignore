@@ -5,3 +5,6 @@ dialogue-flow-godot/android/
 # Rust
 dialogue-flow-rust/target/
 dialogue-flow-rust/.idea/
+
+# CodeGraph local index
+.codegraph/

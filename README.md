@@ -222,6 +222,7 @@ Current project structure:
 ```text
 .
 ├── dialogue-flow-godot/
+│   ├── dialogue-flow.gdextension
 │   ├── icon.svg
 │   └── project.godot
 │
@@ -229,10 +230,17 @@ Current project structure:
 │   ├── Cargo.lock
 │   ├── Cargo.toml
 │   └── src/
-│       └── lib.rs
+│       ├── lib.rs
+│       ├── graph/
+│       │   └── mod.rs
+│       ├── resources/
+│       │   └── mod.rs
+│       └── runtime/
+│           └── mod.rs
 │
 ├── docs/
-│   └── DialogueFlow_Roadmap.md
+│   ├── DialogueFlow_Roadmap.md
+│   └── documentation-guidelines.md
 ├── README.md
 └── .gitignore
 ```
@@ -343,11 +351,13 @@ The roadmap is the project's source of truth and contains:
 
 ## Current Status
 
-The project is currently in **Phase 0 — Naming & Project Skeleton**.
+**Phase 0 — Naming & Project Skeleton is complete.** The project is moving
+into **Phase 1 — Graph Specification**.
 
 Completed so far:
 
 - [x] Project name chosen: `DialogueFlow`
+- [x] Runtime object name chosen: `DialogueController`
 - [x] Clean Godot project created
 - [x] Clean Rust crate created
 - [x] Repository split into Godot and Rust directories
@@ -357,9 +367,8 @@ Completed so far:
 - [x] Incoming and outgoing event support established as core requirements
 - [x] Configure godot-rust
 - [x] Enable Rust documentation registration
-- [ ] Final runtime-object terminology
-- [ ] Establish initial Rust module structure
-- [ ] Verify the first Rust class loads in Godot
+- [x] Establish initial Rust module structure (`graph/`, `resources/`, `runtime/`)
+- [x] Verify the first Rust class loads in Godot
 
 ---
 
