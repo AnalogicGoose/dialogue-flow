@@ -222,11 +222,16 @@ Current project structure:
 ```text
 .
 ├── dialogue-flow-godot/
-│   ├── dialogue-flow.gdextension
 │   ├── icon.svg
 │   ├── project.godot
-│   └── dialogue_data/
-│       └── test_conversation.tres
+│   ├── addons/
+│   │   └── dialogue_flow/
+│   │       └── dialogue-flow.gdextension
+│   └── dev/
+│       ├── dev_test.tscn
+│       ├── dev_test.gd
+│       └── dialogue_data/
+│           └── test_conversation.tres
 │
 ├── dialogue-flow-rust/
 │   ├── Cargo.lock
@@ -257,13 +262,11 @@ The repository intentionally keeps the Godot project and Rust crate separate.
 
 ### `dialogue-flow-godot`
 
-Contains:
-
-- Godot project files
-- Conversation resources
-- Example scenes
-- UI
-- Future editor plugin
+- `addons/dialogue_flow/` — the portable module itself: the `.gdextension`
+  wiring today, and where the future `EditorPlugin` (Phase 12) will live.
+  This is what would get copied into another Godot project.
+- `dev/` — this repo's own scratch/test harness (manual smoke-test scene
+  and test conversation data). Not part of the module; never shipped.
 
 ### `dialogue-flow-rust`
 
