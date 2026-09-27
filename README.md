@@ -355,9 +355,9 @@ Completed so far:
 - [x] Directed graph model chosen
 - [x] Branch convergence established as a core requirement
 - [x] Incoming and outgoing event support established as core requirements
+- [x] Configure godot-rust
+- [x] Enable Rust documentation registration
 - [ ] Final runtime-object terminology
-- [ ] Configure godot-rust
-- [ ] Enable Rust documentation registration
 - [ ] Establish initial Rust module structure
 - [ ] Verify the first Rust class loads in Godot
 

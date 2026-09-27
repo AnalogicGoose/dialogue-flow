@@ -68,8 +68,8 @@
 - [ ] Choose final runtime object terminology.
 - [x] Create a clean Godot project.
 - [x] Create a clean Rust crate/module.
-- [ ] Configure `godot-rust 0.5.5`.
-- [ ] Enable `register-docs`.
+- [x] Configure `godot-rust 0.5.5`.
+- [x] Enable `register-docs`.
 - [ ] Establish folder/module structure.
 - [ ] Establish Godot-facing documentation rules.
 - [ ] Verify a minimal Rust class loads correctly in Godot.
