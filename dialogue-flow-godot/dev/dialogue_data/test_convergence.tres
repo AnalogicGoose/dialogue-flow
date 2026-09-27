@@ -1,0 +1,76 @@
+[gd_resource type="ConversationGraph" format=3 uid="uid://cmqqc18e5ma3a"]
+
+[sub_resource type="EntryNode" id="EntryNode_dfd1y"]
+id = "entry"
+next_id = "speech_a"
+
+[sub_resource type="SpeechNode" id="SpeechNode_eqrk7"]
+id = "speech_a"
+speaker = "Guard"
+text = "Left or right?"
+response_ids = Array[String](["resp_left", "resp_right"])
+
+[sub_resource type="ResponseNode" id="ResponseNode_l40sh"]
+id = "resp_left"
+text = "Left."
+next_id = "speech_left1"
+
+[sub_resource type="ResponseNode" id="ResponseNode_im6ca"]
+id = "resp_right"
+text = "Right."
+next_id = "speech_right1"
+
+[sub_resource type="SpeechNode" id="SpeechNode_77186"]
+id = "speech_left1"
+speaker = "Narrator"
+text = "You walk down the left path."
+response_ids = Array[String](["continue_left"])
+
+[sub_resource type="SpeechNode" id="SpeechNode_ncrrm"]
+id = "speech_right1"
+speaker = "Narrator"
+text = "You walk down the right path."
+response_ids = Array[String](["continue_right"])
+
+[sub_resource type="ResponseNode" id="ResponseNode_2gc3y"]
+id = "continue_left"
+text = "Continue..."
+next_id = "speech_merge"
+
+[sub_resource type="ResponseNode" id="ResponseNode_s3apa"]
+id = "continue_right"
+text = "Continue..."
+next_id = "speech_merge"
+
+[sub_resource type="SpeechNode" id="SpeechNode_i658u"]
+id = "speech_merge"
+speaker = "Narrator"
+text = "Both paths lead to a locked door."
+response_ids = Array[String](["resp_knock", "resp_leave"])
+
+[sub_resource type="ResponseNode" id="ResponseNode_88l4s"]
+id = "resp_knock"
+text = "Knock."
+next_id = "speech_knock"
+
+[sub_resource type="ResponseNode" id="ResponseNode_kdwax"]
+id = "resp_leave"
+text = "Leave."
+next_id = "end"
+
+[sub_resource type="SpeechNode" id="SpeechNode_22a5i"]
+id = "speech_knock"
+speaker = "Narrator"
+text = "The door creaks open."
+response_ids = Array[String](["continue_knock"])
+
+[sub_resource type="ResponseNode" id="ResponseNode_0vfwv"]
+id = "continue_knock"
+text = "Continue..."
+next_id = "end"
+
+[sub_resource type="EndNode" id="EndNode_t7q1o"]
+id = "end"
+
+[resource]
+nodes = Array[Resource]([SubResource("EntryNode_dfd1y"), SubResource("SpeechNode_eqrk7"), SubResource("ResponseNode_l40sh"), SubResource("ResponseNode_im6ca"), SubResource("SpeechNode_77186"), SubResource("SpeechNode_ncrrm"), SubResource("ResponseNode_2gc3y"), SubResource("ResponseNode_s3apa"), SubResource("SpeechNode_i658u"), SubResource("ResponseNode_88l4s"), SubResource("ResponseNode_kdwax"), SubResource("SpeechNode_22a5i"), SubResource("ResponseNode_0vfwv"), SubResource("EndNode_t7q1o")])

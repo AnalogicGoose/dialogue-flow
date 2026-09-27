@@ -26,7 +26,7 @@
 - [x] Phase 3 — Runtime controller
 - [x] Phase 4 — Generic dialogue UI
 - [x] Phase 5 — True branching
-- [ ] Phase 6 — Branch convergence
+- [x] Phase 6 — Branch convergence
 - [ ] Phase 7 — Outgoing events
 - [ ] Phase 8 — Incoming events
 - [ ] Phase 9 — State & conditions
@@ -312,11 +312,11 @@ Branch merging must be native to the graph.
 
 ## Tasks
 
-- [ ] Permit multiple nodes to target the same node.
-- [ ] Ensure runtime makes no parent/ownership assumption.
-- [ ] Test two branches converging into one node.
-- [ ] Test convergence after several nodes.
-- [ ] Test convergence followed by another branch.
+- [x] Permit multiple nodes to target the same node. (already generic since Phase 2/3; nodes are addressed purely by ID, nothing tracks a parent)
+- [x] Ensure runtime makes no parent/ownership assumption.
+- [x] Test two branches converging into one node.
+- [x] Test convergence after several nodes.
+- [x] Test convergence followed by another branch.
 
 ## Example
 
@@ -330,7 +330,18 @@ No `MergeNode` is required.
 
 ## Milestone
 
-- [ ] Independent branches can naturally reunite into the same flow.
+- [x] Independent branches can naturally reunite into the same flow.
+
+Verified with `dev/dialogue_data/test_convergence.tres` (14 nodes): the
+left and right paths (each 2 hops deep) reunite at `speech_merge`, which
+then branches again into knock/leave, and both of *those* reconverge on
+one shared `End`. All four combinations (left/right × knock/leave) were
+driven directly through `DialogueController` and confirmed correct.
+Caught and fixed another authoring bug along the way — one branch used
+`fallback_id` pointing at a `ResponseNode`, which is an illegal
+connection per the spec (Phase 11 validation would catch this once
+built; for now it happens to still traverse, just silently skipping the
+pause the author intended).
 
 ---
 
@@ -594,6 +605,29 @@ Target signals should cover:
 - [ ] `event_emitted`
 - [ ] `node_entered`
 - [ ] `node_exited`
+
+## Observability
+
+The point of this module is to let external systems *react* to a
+conversation, which means signals need to carry enough identifying data
+to do that, not just announce "something happened":
+
+- [ ] `dialogue_finished` should identify which `End` node was reached
+      (currently it carries no payload — see
+      `DialogueController::enter`/Phase 3 in `dialogue-flow-rust/src/runtime/mod.rs`).
+      Two different `End`s in the same graph are indistinguishable to a
+      listener today.
+- [ ] `node_entered`/`node_exited` should carry the entered/exited node's
+      `id`, so an external system can trace the exact path taken through
+      a conversation, not just its start/end.
+- [ ] Revisit whether `speech_changed`/`responses_changed` should also
+      carry the current node's `id`, for the same reason.
+
+"Trigger"-style outputs (UEFN Dialog Device comparison) are already
+covered by the planned `Event` node (Phase 7) — a `StringName` identifier
+plus optional payload, surfaced through `event_emitted`. No new node type
+is needed for this; it just needs Phase 7 to actually land with a real
+payload, not a stub.
 
 ## Documentation & Encapsulation
 
