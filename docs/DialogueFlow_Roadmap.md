@@ -25,7 +25,7 @@
 - [x] Phase 2 — Core conversation Resources
 - [x] Phase 3 — Runtime controller
 - [x] Phase 4 — Generic dialogue UI
-- [ ] Phase 5 — True branching
+- [x] Phase 5 — True branching
 - [ ] Phase 6 — Branch convergence
 - [ ] Phase 7 — Outgoing events
 - [ ] Phase 8 — Incoming events
@@ -277,11 +277,11 @@ reaches `End`.
 
 ## Tasks
 
-- [ ] Allow one speech node to expose multiple responses.
-- [ ] Allow each response to target a different node.
-- [ ] Traverse the selected branch.
-- [ ] Support arbitrarily deep branches.
-- [ ] Verify different choices produce different dialogue paths.
+- [x] Allow one speech node to expose multiple responses. (already generic since Phase 2/3; `response_ids` was never capped at one)
+- [x] Allow each response to target a different node.
+- [x] Traverse the selected branch.
+- [x] Support arbitrarily deep branches. (verified 2 levels: `Speech → Response → Speech → Response → End`)
+- [x] Verify different choices produce different dialogue paths.
 
 ## Example
 
@@ -293,7 +293,16 @@ Speech A -> Choice
 
 ## Milestone
 
-- [ ] A player choice genuinely changes the conversation path.
+- [x] A player choice genuinely changes the conversation path.
+
+Verified with `dev/dialogue_data/test_branching.tres`: `Guard: "Which way
+will you go?"` branches on `choose(0)` vs `choose(1)` into two entirely
+separate `Speech → "Continue..." → End` tails, confirmed both headlessly
+(driving `DialogueController` directly) and manually in the editor.
+Caught and fixed a copy-paste authoring bug along the way (one branch's
+response pointed at the other branch's `Continue...` node) — a reminder
+that two `End`s look identical at runtime, so divergence needs checking
+by tracing IDs, not just "does it still end."
 
 ---
 

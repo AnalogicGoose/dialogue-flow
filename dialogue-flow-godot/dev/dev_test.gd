@@ -3,8 +3,6 @@ extends Node2D
 @onready var controller: DialogueController = $DialogueController
 
 func _ready() -> void:
-	controller.conversation = load("res://dev/dialogue_data/test_conversation.tres")
-	
 	controller.dialogue_started.connect(func(): print("-- dialogue_started --"))
 	controller.dialogue_finished.connect(func(): print("-- dialogue_finished --"))
 	controller.dialogue_cancelled.connect(func(): print("-- dialogue_cancelled --"))
@@ -19,4 +17,3 @@ func _on_speech_changed(speaker: String, text: String) -> void:
 func _on_responses_changed(response_texts: Array) -> void:
 	for i in response_texts.size():
 		print("%s: %s" % [i, response_texts[i]])
-	print("Press a number key to choose a response.")

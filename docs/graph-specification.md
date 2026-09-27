@@ -137,6 +137,17 @@ Pausing nodes are exactly: a `Speech` with ≥1 `Response` (waits for
 `choose()`), and `WaitForEvent` before its event arrives (waits for
 `receive_event()`). Nothing else pauses.
 
+**Authoring note:** a fallback-only `Speech` (no responses) is invisible
+to the player in practice — it fires `speech_changed` and immediately
+falls through to whatever comes next in the same step, giving a UI no
+frame to display it before it's overwritten or the conversation ends. Use
+`fallback_id` only for back-to-back automatic beats you don't need read;
+for any line the player should actually see before it advances (even one
+with nothing meaningful to choose), give it a single `Response` — e.g.
+`"Continue..."` — instead of a `fallback_id`. This is deliberate, not a
+bug: v1 has no separate "advance on click" mechanism, so a `Response` is
+how you get a readable pause.
+
 ## Worked Example
 
 ```text

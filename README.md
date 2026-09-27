@@ -233,7 +233,8 @@ Current project structure:
 │       ├── dev_test.tscn
 │       ├── dev_test.gd
 │       └── dialogue_data/
-│           └── test_conversation.tres
+│           ├── test_conversation.tres
+│           └── test_branching.tres
 │
 ├── dialogue-flow-rust/
 │   ├── Cargo.lock
@@ -364,8 +365,8 @@ The roadmap is the project's source of truth and contains:
 
 ## Current Status
 
-**Phases 0-4 are complete.** The project is moving into
-**Phase 5 — True Branching**.
+**Phases 0-5 are complete.** The project is moving into
+**Phase 6 — Branch Convergence**.
 
 Completed so far:
 
@@ -389,6 +390,7 @@ Completed so far:
 - [x] Runtime verified end-to-end against the test conversation, entirely through signals, with no UI involved
 - [x] Generic `DialogueUI` scene (`addons/dialogue_flow/dialogue_ui.tscn`) implemented: displays speaker/text, builds response buttons dynamically, shows/hides on start/finish/cancel
 - [x] Full conversation played manually through the Godot UI, start to `End`
+- [x] True branching verified: a single `Speech` with two `Response`s leads to two fully separate tails, confirmed to diverge correctly end-to-end
 
 ---
 
