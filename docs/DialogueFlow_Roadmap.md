@@ -23,7 +23,7 @@
 - [x] Phase 0 — Naming & project skeleton
 - [x] Phase 1 — Graph specification
 - [x] Phase 2 — Core conversation Resources
-- [ ] Phase 3 — Runtime controller
+- [x] Phase 3 — Runtime controller
 - [ ] Phase 4 — Generic dialogue UI
 - [ ] Phase 5 — True branching
 - [ ] Phase 6 — Branch convergence
@@ -204,30 +204,32 @@ Build the object that executes conversation graphs.
 
 ## Tasks
 
-- [ ] Assign a conversation resource from the Inspector.
-- [ ] Implement `start()`.
-- [ ] Implement `stop()`.
-- [ ] Implement `cancel()`.
-- [ ] Track the current node.
-- [ ] Traverse automatic nodes.
-- [ ] Pause when player input is required.
-- [ ] Implement response selection.
-- [ ] Detect `End`.
-- [ ] Handle broken/missing node references safely.
-- [ ] Prevent accidental infinite automatic traversal.
-- [ ] Reset runtime state on restart.
+- [x] Assign a conversation resource from the Inspector. (`#[export] conversation: Option<Gd<ConversationGraph>>`)
+- [x] Implement `start()`.
+- [x] Implement `stop()`.
+- [x] Implement `cancel()`.
+- [x] Track the current node. (`current_id`)
+- [x] Traverse automatic nodes. (`Entry`, `Response`, and `Speech` with no responses)
+- [x] Pause when player input is required. (`Speech` with ≥1 response)
+- [x] Implement response selection. (`choose(index)`)
+- [x] Detect `End`.
+- [x] Handle broken/missing node references safely. (dangling ID → `godot_error!` + reset, never a panic)
+- [x] Prevent accidental infinite automatic traversal. (`MAX_AUTOMATIC_STEPS` guard)
+- [x] Reset runtime state on restart. (`start()` always resets first)
 
 ## Initial Signals
 
-- [ ] `dialogue_started`
-- [ ] `dialogue_finished`
-- [ ] `dialogue_cancelled`
-- [ ] `speech_changed`
-- [ ] `responses_changed`
+- [x] `dialogue_started`
+- [x] `dialogue_finished`
+- [x] `dialogue_cancelled`
+- [x] `speech_changed`
+- [x] `responses_changed`
 
 ## Milestone
 
-- [ ] Runtime can execute a complete linear conversation without knowing anything about the UI.
+- [x] Runtime can execute a complete linear conversation without knowing anything about the UI.
+
+Verified headless against `dialogue-flow-godot/dialogue_data/test_conversation.tres`: `start()` pauses on the `Response`, `choose(0)` resumes through the fallback `Speech` into `End`, and `cancel()` mid-conversation emits `dialogue_cancelled` — all via signals, with no UI involved.
 
 ---
 

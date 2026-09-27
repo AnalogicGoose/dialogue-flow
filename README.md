@@ -359,8 +359,8 @@ The roadmap is the project's source of truth and contains:
 
 ## Current Status
 
-**Phases 0-2 are complete.** The project is moving into
-**Phase 3 — Runtime Controller**.
+**Phases 0-3 are complete.** The project is moving into
+**Phase 4 — Generic Dialogue UI**.
 
 Completed so far:
 
@@ -380,6 +380,8 @@ Completed so far:
 - [x] Written graph specification (see [`docs/graph-specification.md`](./docs/graph-specification.md))
 - [x] `EntryNode`, `SpeechNode`, `ResponseNode`, `EndNode`, and `ConversationGraph` implemented as `Resource` subclasses
 - [x] First linear test conversation authored and saved as `.tres`, with no dialogue text in Rust source
+- [x] `DialogueController` implemented: `start()`/`stop()`/`cancel()`/`choose()`, automatic traversal, pausing on player choice, and all five initial signals
+- [x] Runtime verified end-to-end against the test conversation, entirely through signals, with no UI involved
 
 ---
 
