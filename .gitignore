@@ -1,0 +1,7 @@
+# Godot 4+
+dialogue-flow-godot/.godot/
+dialogue-flow-godot/android/
+
+# Rust
+dialogue-flow-rust/target/
+dialogue-flow-rust/.idea/
