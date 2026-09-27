@@ -226,7 +226,9 @@ Current project structure:
 │   ├── project.godot
 │   ├── addons/
 │   │   └── dialogue_flow/
-│   │       └── dialogue-flow.gdextension
+│   │       ├── dialogue-flow.gdextension
+│   │       ├── dialogue_ui.tscn
+│   │       └── dialogue_ui.gd
 │   └── dev/
 │       ├── dev_test.tscn
 │       ├── dev_test.gd
@@ -362,8 +364,8 @@ The roadmap is the project's source of truth and contains:
 
 ## Current Status
 
-**Phases 0-3 are complete.** The project is moving into
-**Phase 4 — Generic Dialogue UI**.
+**Phases 0-4 are complete.** The project is moving into
+**Phase 5 — True Branching**.
 
 Completed so far:
 
@@ -385,6 +387,8 @@ Completed so far:
 - [x] First linear test conversation authored and saved as `.tres`, with no dialogue text in Rust source
 - [x] `DialogueController` implemented: `start()`/`stop()`/`cancel()`/`choose()`, automatic traversal, pausing on player choice, and all five initial signals
 - [x] Runtime verified end-to-end against the test conversation, entirely through signals, with no UI involved
+- [x] Generic `DialogueUI` scene (`addons/dialogue_flow/dialogue_ui.tscn`) implemented: displays speaker/text, builds response buttons dynamically, shows/hides on start/finish/cancel
+- [x] Full conversation played manually through the Godot UI, start to `End`
 
 ---
 

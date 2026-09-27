@@ -1,0 +1,48 @@
+[gd_scene format=3 uid="uid://bbfkyiinape87"]
+
+[ext_resource type="Script" uid="uid://cno50bqdwla4g" path="res://addons/dialogue_flow/dialogue_ui.gd" id="1_rv78l"]
+
+[node name="DialogueUi" type="Control" unique_id=25258123]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_rv78l")
+
+[node name="Panel" type="Panel" parent="." unique_id=917548930]
+layout_mode = 1
+anchors_preset = -1
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = -180.0
+grow_horizontal = 2
+grow_vertical = 0
+
+[node name="MarginContainer" type="MarginContainer" parent="Panel" unique_id=1663166880]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 16
+theme_override_constants/margin_top = 16
+theme_override_constants/margin_right = 16
+theme_override_constants/margin_bottom = 16
+
+[node name="VBoxContainer" type="VBoxContainer" parent="Panel/MarginContainer" unique_id=1267362770]
+layout_mode = 2
+
+[node name="SpeakerLabel" type="Label" parent="Panel/MarginContainer/VBoxContainer" unique_id=794200127]
+layout_mode = 2
+
+[node name="TextLabel" type="Label" parent="Panel/MarginContainer/VBoxContainer" unique_id=1403680124]
+custom_minimum_size = Vector2(1, 1)
+layout_mode = 2
+autowrap_mode = 2
+
+[node name="ResponsesContainer" type="VBoxContainer" parent="Panel/MarginContainer/VBoxContainer" unique_id=1212591406]
+layout_mode = 2

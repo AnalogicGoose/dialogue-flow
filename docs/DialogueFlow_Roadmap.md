@@ -24,7 +24,7 @@
 - [x] Phase 1 — Graph specification
 - [x] Phase 2 — Core conversation Resources
 - [x] Phase 3 — Runtime controller
-- [ ] Phase 4 — Generic dialogue UI
+- [x] Phase 4 — Generic dialogue UI
 - [ ] Phase 5 — True branching
 - [ ] Phase 6 — Branch convergence
 - [ ] Phase 7 — Outgoing events
@@ -239,15 +239,15 @@ Presentation stays separate from runtime logic.
 
 ## Tasks
 
-- [ ] Create basic dialogue UI scene.
-- [ ] Display speaker name.
-- [ ] Display speech text.
-- [ ] Dynamically create response buttons.
-- [ ] Send selected responses to the runtime.
-- [ ] Show UI when dialogue starts.
-- [ ] Hide UI when dialogue ends.
-- [ ] Handle cancellation.
-- [ ] Keep presentation logic outside the graph runtime.
+- [x] Create basic dialogue UI scene. (`addons/dialogue_flow/dialogue_ui.tscn`)
+- [x] Display speaker name.
+- [x] Display speech text.
+- [x] Dynamically create response buttons.
+- [x] Send selected responses to the runtime. (`Button.pressed` → `controller.choose(i)`)
+- [x] Show UI when dialogue starts.
+- [x] Hide UI when dialogue ends.
+- [x] Handle cancellation. (`dialogue_cancelled` routes to the same hide as `dialogue_finished`)
+- [x] Keep presentation logic outside the graph runtime. (`DialogueUI` only touches `DialogueController`'s signals and `choose()`, never its internal state)
 
 ## Architecture
 
@@ -264,7 +264,12 @@ DialogueUI
 
 ## Milestone
 
-- [ ] One conversation can be played completely through Godot UI.
+- [x] One conversation can be played completely through Godot UI.
+
+Verified manually in the editor: `dev/dev_test.tscn` (`DialogueController` +
+a `dialogue_ui.tscn` instance) plays the test conversation end to end —
+speech and responses display, choosing a response advances it, and it
+reaches `End`.
 
 ---
 
