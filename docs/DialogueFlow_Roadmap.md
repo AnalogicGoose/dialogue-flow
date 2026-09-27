@@ -21,7 +21,7 @@
 - [x] Visual Godot authoring is the end goal
 
 - [x] Phase 0 — Naming & project skeleton
-- [ ] Phase 1 — Graph specification
+- [x] Phase 1 — Graph specification
 - [ ] Phase 2 — Core conversation Resources
 - [ ] Phase 3 — Runtime controller
 - [ ] Phase 4 — Generic dialogue UI
@@ -98,31 +98,37 @@ Before implementation, define exactly how the graph behaves.
 
 ## Graph Rules
 
-- [ ] Define node identity system.
-- [ ] Define stable unique node IDs.
-- [ ] Define edge/connection representation.
-- [ ] Define graph entry semantics.
-- [ ] Define what happens when a node has no outgoing edge.
-- [ ] Define allowed connection types.
-- [ ] Define multiple incoming-edge behavior.
-- [ ] Define cycle/loop behavior.
-- [ ] Define termination behavior.
-- [ ] Define runtime errors vs editor validation errors.
-- [ ] Define how automatic nodes are traversed.
-- [ ] Define how player-choice nodes pause execution.
+All defined in [`graph-specification.md`](./graph-specification.md).
+
+- [x] Define node identity system.
+- [x] Define stable unique node IDs.
+- [x] Define edge/connection representation.
+- [x] Define graph entry semantics.
+- [x] Define what happens when a node has no outgoing edge.
+- [x] Define allowed connection types.
+- [x] Define multiple incoming-edge behavior.
+- [x] Define cycle/loop behavior.
+- [x] Define termination behavior.
+- [x] Define runtime errors vs editor validation errors.
+- [x] Define how automatic nodes are traversed.
+- [x] Define how player-choice nodes pause execution.
 
 ## Initial Node Vocabulary
 
-- [ ] `Entry`
-- [ ] `Speech`
-- [ ] `Response`
-- [ ] `Event`
-- [ ] `Condition`
-- [ ] `Random`
-- [ ] `WaitForEvent`
-- [ ] `Reroute`
-- [ ] `Restart`
-- [ ] `End`
+Semantics defined for all ten in
+[`graph-specification.md`](./graph-specification.md); implementation is
+still Phase 2+ per node.
+
+- [x] `Entry`
+- [x] `Speech`
+- [x] `Response`
+- [x] `Event`
+- [x] `Condition`
+- [x] `Random`
+- [x] `WaitForEvent`
+- [x] `Reroute`
+- [x] `Restart`
+- [x] `End`
 
 Not every node must be implemented immediately. This phase defines their semantics first.
 
@@ -143,7 +149,7 @@ End        -> nothing
 
 ## Milestone
 
-- [ ] Written graph specification is complete enough to implement without inventing behavior during coding.
+- [x] Written graph specification is complete enough to implement without inventing behavior during coding.
 
 ---
 
