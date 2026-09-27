@@ -1,0 +1,14 @@
+[configuration]
+entry_symbol = "gdext_rust_init"
+compatibility_minimum = 4.1
+reloadable = true
+
+[libraries]
+linux.debug.x86_64 =     "res://../dialogue-flow-rust/target/debug/libdialogue_flow.so"
+linux.release.x86_64 =   "res://../dialogue-flow-rust/target/release/libdialogue_flow.so"
+windows.debug.x86_64 =   "res://../dialogue-flow-rust/target/debug/dialogue_flow.dll"
+windows.release.x86_64 = "res://../dialogue-flow-rust/target/release/dialogue_flow.dll"
+macos.debug =            "res://../dialogue-flow-rust/target/debug/libdialogue_flow.dylib"
+macos.release =          "res://../dialogue-flow-rust/target/release/libdialogue_flow.dylib"
+macos.debug.arm64 =      "res://../dialogue-flow-rust/target/debug/libdialogue_flow.dylib"
+macos.release.arm64 =    "res://../dialogue-flow-rust/target/release/libdialogue_flow.dylib"
