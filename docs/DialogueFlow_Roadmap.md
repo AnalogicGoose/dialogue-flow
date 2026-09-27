@@ -22,7 +22,7 @@
 
 - [x] Phase 0 — Naming & project skeleton
 - [x] Phase 1 — Graph specification
-- [ ] Phase 2 — Core conversation Resources
+- [x] Phase 2 — Core conversation Resources
 - [ ] Phase 3 — Runtime controller
 - [ ] Phase 4 — Generic dialogue UI
 - [ ] Phase 5 — True branching
@@ -159,18 +159,18 @@ Build the authorable data model.
 
 ## Tasks
 
-- [ ] Create the root conversation/graph `Resource`.
-- [ ] Create base graph-node representation.
-- [ ] Give every node a stable unique ID.
-- [ ] Store graph edges/connections.
-- [ ] Store editor positions separately from runtime semantics.
-- [ ] Implement `Entry`.
-- [ ] Implement `Speech`.
-- [ ] Implement `Response`.
-- [ ] Implement `End`.
-- [ ] Expose dialogue content through Godot Inspector.
-- [ ] Save/load conversations as `.tres`.
-- [ ] Verify dialogue edits do not require recompiling Rust.
+- [x] Create the root conversation/graph `Resource`. (`ConversationGraph`)
+- [x] Create base graph-node representation. (sibling `Resource` subclasses — see [`graph-specification.md`](./graph-specification.md); gdext doesn't support inheriting one custom class from another, so there is no shared Rust base type)
+- [x] Give every node a stable unique ID. (`id` field on every node type)
+- [x] Store graph edges/connections. (`next_id` / `response_ids` / `fallback_id`, by ID)
+- [x] Store editor positions separately from runtime semantics. (`editor_position` field, unused by traversal)
+- [x] Implement `Entry`.
+- [x] Implement `Speech`.
+- [x] Implement `Response`.
+- [x] Implement `End`.
+- [x] Expose dialogue content through Godot Inspector.
+- [x] Save/load conversations as `.tres`.
+- [x] Verify dialogue edits do not require recompiling Rust.
 
 ## First Test Graph
 
@@ -192,7 +192,9 @@ End
 
 ## Milestone
 
-- [ ] A complete linear conversation can be authored with Godot resources and no dialogue text exists in Rust source.
+- [x] A complete linear conversation can be authored with Godot resources and no dialogue text exists in Rust source.
+
+Built and verified as `dialogue-flow-godot/dialogue_data/test_conversation.tres`.
 
 ---
 

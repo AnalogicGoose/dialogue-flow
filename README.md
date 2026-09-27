@@ -224,7 +224,9 @@ Current project structure:
 ├── dialogue-flow-godot/
 │   ├── dialogue-flow.gdextension
 │   ├── icon.svg
-│   └── project.godot
+│   ├── project.godot
+│   └── dialogue_data/
+│       └── test_conversation.tres
 │
 ├── dialogue-flow-rust/
 │   ├── Cargo.lock
@@ -234,12 +236,18 @@ Current project structure:
 │       ├── graph/
 │       │   └── mod.rs
 │       ├── resources/
-│       │   └── mod.rs
+│       │   ├── mod.rs
+│       │   ├── entry.rs
+│       │   ├── speech.rs
+│       │   ├── response.rs
+│       │   ├── end.rs
+│       │   └── graph.rs
 │       └── runtime/
 │           └── mod.rs
 │
 ├── docs/
 │   ├── DialogueFlow_Roadmap.md
+│   ├── graph-specification.md
 │   └── documentation-guidelines.md
 ├── README.md
 └── .gitignore
@@ -351,8 +359,8 @@ The roadmap is the project's source of truth and contains:
 
 ## Current Status
 
-**Phase 0 — Naming & Project Skeleton is complete.** The project is moving
-into **Phase 1 — Graph Specification**.
+**Phases 0-2 are complete.** The project is moving into
+**Phase 3 — Runtime Controller**.
 
 Completed so far:
 
@@ -369,6 +377,9 @@ Completed so far:
 - [x] Enable Rust documentation registration
 - [x] Establish initial Rust module structure (`graph/`, `resources/`, `runtime/`)
 - [x] Verify the first Rust class loads in Godot
+- [x] Written graph specification (see [`docs/graph-specification.md`](./docs/graph-specification.md))
+- [x] `EntryNode`, `SpeechNode`, `ResponseNode`, `EndNode`, and `ConversationGraph` implemented as `Resource` subclasses
+- [x] First linear test conversation authored and saved as `.tres`, with no dialogue text in Rust source
 
 ---
 
