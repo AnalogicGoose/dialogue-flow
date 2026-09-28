@@ -14,3 +14,21 @@ pub struct ConversationGraph {
     #[export]
     pub nodes: Array<Gd<Resource>>,
 }
+
+#[godot_api]
+impl ConversationGraph {
+    /// Validates this graph without running it. Returns a Dictionary with
+    /// `errors: Array[String]` (blocking problems) and
+    /// `warnings: Array[String]` (non-blocking, worth knowing about).
+    /// See Phase 11 in the roadmap and graph-specification.md.
+    #[func]
+    pub fn validate(&self) -> Dictionary<GString, Variant> {
+        let (errors, warnings) = crate::graph::validate(&self.nodes);
+        let mut result: Dictionary<GString, Variant> = Dictionary::new();
+        let errors: Array<GString> = errors.into_iter().collect();
+        let warnings: Array<GString> = warnings.into_iter().collect();
+        result.set("errors", &errors);
+        result.set("warnings", &warnings);
+        result
+    }
+}

@@ -20,7 +20,7 @@ response_ids = Array[String](["end_r"])
 id = "speech_leave"
 speaker = "Guard"
 text = "Leave."
-fallback_id = "end_r"
+response_ids = Array[String](["end_r"])
 
 [sub_resource type="ResponseNode" id="ResponseNode_awl11"]
 id = "end_r"

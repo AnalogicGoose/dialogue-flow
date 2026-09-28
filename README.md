@@ -384,8 +384,8 @@ The roadmap is the project's source of truth and contains:
 
 ## Current Status
 
-**Phases 0-10 are complete.** The project is moving into
-**Phase 11 — Graph Validation**.
+**Phases 0-11 are complete.** The project is moving into
+**Phase 12 — Visual Godot Graph Editor**.
 
 Completed so far:
 
@@ -416,6 +416,7 @@ Completed so far:
 - [x] `ConditionNode` and `set_value()`/`get_value()` implemented: conversations branch on named state that persists across `start()`/`stop()`/`cancel()`
 - [x] Conditional response visibility: a `Response` can require a state variable to be truthy to appear, with index selection kept consistent between what's displayed and what's chosen
 - [x] `RandomNode`, `RestartNode`, and `RerouteNode` implemented: weighted random branches, looping back to `Entry`, and a transparent passthrough node, all verified against the real project
+- [x] `ConversationGraph::validate()` implemented: static checks for missing/duplicate `Entry`, dangling/illegal edges, invalid response targets, unreachable nodes, and cycles with no pausing node — caught a real, previously-undetected bug in existing test content
 
 ---
 

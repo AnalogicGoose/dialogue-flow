@@ -31,7 +31,7 @@
 - [x] Phase 8 — Incoming events
 - [x] Phase 9 — State & conditions
 - [x] Phase 10 — Additional flow nodes
-- [ ] Phase 11 — Graph validation
+- [x] Phase 11 — Graph validation
 - [ ] Phase 12 — Visual Godot graph editor
 - [ ] Phase 13 — Editor quality of life
 - [ ] Phase 14 — External/public API
@@ -571,24 +571,56 @@ Malformed conversations should fail clearly.
 
 ## Tasks
 
-- [ ] Detect missing `Entry`.
-- [ ] Detect invalid multiple entry points if only one is allowed.
-- [ ] Detect dangling edges.
-- [ ] Detect nonexistent node IDs.
-- [ ] Detect illegal connection types.
-- [ ] Detect unreachable nodes.
-- [ ] Detect invalid response targets.
-- [ ] Detect invalid conditions.
-- [ ] Detect invalid event names.
-- [ ] Detect invalid wait-event names.
-- [ ] Warn about suspicious infinite loops.
-- [ ] Distinguish errors from warnings.
-- [ ] Produce useful Godot error messages.
-- [ ] Expose validation API for editor tooling.
+- [x] Detect missing `Entry`. (error)
+- [x] Detect invalid multiple entry points if only one is allowed. (error; names every EntryNode found)
+- [x] Detect dangling edges. (error; any `*_id` field pointing at a nonexistent node)
+- [x] Detect nonexistent node IDs. Interpreted as **duplicate node IDs** (distinct from dangling edges — see note below). (error)
+- [x] Detect illegal connection types. (error; any generic edge targeting `Entry` or `Response`, per the connection-legality rule)
+- [x] Detect unreachable nodes. (warning; BFS from Entry over every *possible* edge, not just the one that would be taken at runtime)
+- [x] Detect invalid response targets. (error; a `response_ids` entry that doesn't resolve to an actual `ResponseNode`)
+- [x] Detect invalid conditions. (warning for empty `variable_name`; `true_id`/`false_id` covered by the general edge checks)
+- [x] Detect invalid event names. (warning for empty `event_name` on `EventNode`)
+- [x] Detect invalid wait-event names. (warning for empty `event_name` on `WaitForEventNode`)
+- [x] Warn about suspicious infinite loops. (warning; DFS cycle detection restricted to non-pausing nodes only — see graph-specification.md's cycle-safety section)
+- [x] Distinguish errors from warnings. (`ConversationGraph::validate()` returns both as separate lists)
+- [x] Produce useful Godot error messages. (every message names the specific offending node id and field)
+- [x] Expose validation API for editor tooling. (`ConversationGraph::validate() -> Dictionary` with `errors`/`warnings`, callable from GDScript now, ready for Phase 12's editor to call)
+
+**Interpretation note:** "Detect nonexistent node IDs" was ambiguous
+against "Detect dangling edges." Implemented as **duplicate ID
+detection** instead of a repeat of the dangling-edge check, since two
+nodes sharing an ID silently corrupts `DialogueController`'s
+`node_index` (one overwrites the other) with nothing else to catch it.
+
+**Errors vs. warnings:** errors mean the graph can't be trusted to run
+correctly (missing/duplicate Entry, dangling/illegal edges, a
+`response_ids` entry that isn't a Response, a Speech that's a guaranteed
+dead end, an empty or duplicate id, a Random with no branches or zero
+total weight). Warnings mean it'll probably still run, but something
+looks like a mistake (empty event/variable names, a negative branch
+weight, an unreachable node, a cycle with no pausing node).
+
+**Deliberate scope limit:** the cycle check treats any `Speech` with
+`response_ids` (and any `WaitForEvent`) as "pausing," even though Phase
+9's conditional visibility could make all of a Speech's responses hidden
+at runtime and let it fall through anyway. That's runtime-state-dependent
+and unknowable statically, so the checker stays conservative rather than
+risk a false "this can't loop" — the `MAX_AUTOMATIC_STEPS` runtime guard
+from Phase 3 remains the actual safety net for that specific edge case.
 
 ## Milestone
 
-- [ ] Intentionally broken graphs explain exactly what is wrong.
+- [x] Intentionally broken graphs explain exactly what is wrong.
+
+Verified against 12 deliberately broken graphs (one per major check) plus
+one fully valid graph (zero false positives), run directly against the
+real project. Running `validate()` against all ten existing test graphs
+caught a **real, previously-undetected bug**: `test_condition.tres`'s
+`speech_leave` had `fallback_id` pointing at a `ResponseNode` — illegal,
+and silent, since the runtime doesn't enforce the rule (only static
+validation does). It had gone unnoticed since Phase 9 because it still
+"worked" — it just silently skipped its intended pause. Fixed to use
+`response_ids` instead, matching the sibling `speech_enter` node.
 
 ---
 
