@@ -226,12 +226,17 @@ Current project structure:
 │   ├── project.godot
 │   ├── addons/
 │   │   └── dialogue_flow/
+│   │       ├── plugin.cfg
 │   │       ├── dialogue-flow.gdextension
 │   │       ├── dialogue_ui.tscn
-│   │       └── dialogue_ui.gd
+│   │       ├── dialogue_ui.gd
+│   │       └── editor/
+│   │           ├── dialogue_flow_editor_plugin.gd
+│   │           └── graph_editor.gd
 │   └── dev/
 │       ├── dev_test.tscn
 │       ├── dev_test.gd
+│       ├── validate_all.gd
 │       └── dialogue_data/
 │           ├── basics/
 │           │   └── test_conversation.tres
@@ -417,6 +422,8 @@ Completed so far:
 - [x] Conditional response visibility: a `Response` can require a state variable to be truthy to appear, with index selection kept consistent between what's displayed and what's chosen
 - [x] `RandomNode`, `RestartNode`, and `RerouteNode` implemented: weighted random branches, looping back to `Entry`, and a transparent passthrough node, all verified against the real project
 - [x] `ConversationGraph::validate()` implemented: static checks for missing/duplicate `Entry`, dangling/illegal edges, invalid response targets, unreachable nodes, and cycles with no pausing node — caught a real, previously-undetected bug in existing test content
+
+**In progress (Phase 12):** a custom `EditorPlugin` (`addons/dialogue_flow/editor/`) renders any `ConversationGraph` as a read-only graph on its own main-screen tab — nodes, connections, and an automatic left-to-right layout by longest path from `Entry`. Creating/editing/deleting nodes and connections, property editing, and position persistence are still ahead; see the roadmap for details and the bugs found along the way.
 
 ---
 

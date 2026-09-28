@@ -640,11 +640,11 @@ Rust remains responsible for data/runtime. GDScript may be used for editor integ
 
 ## Tasks
 
-- [ ] Create custom `EditorPlugin`.
-- [ ] Recognize dialogue graph resources.
-- [ ] Open them in a dedicated editor.
-- [ ] Render nodes visually.
-- [ ] Render connections visually.
+- [x] Create custom `EditorPlugin`. (`addons/dialogue_flow/editor/dialogue_flow_editor_plugin.gd`)
+- [x] Recognize dialogue graph resources. (`_handles()` matches `ConversationGraph`)
+- [x] Open them in a dedicated editor. (a main-screen tab, next to 2D/3D/Script/AssetLib — not a bottom panel, see notes below)
+- [x] Render nodes visually. (`addons/dialogue_flow/editor/graph_editor.gd`, a `GraphEdit` populated from `ConversationGraph.nodes`)
+- [x] Render connections visually. (every `*_id` edge field, via `_outgoing_ids()`)
 - [ ] Create nodes from a context menu.
 - [ ] Delete nodes.
 - [ ] Move nodes.
@@ -653,15 +653,29 @@ Rust remains responsible for data/runtime. GDScript may be used for editor integ
 - [ ] Prevent invalid connections.
 - [ ] Edit selected node properties.
 - [ ] Persist node positions.
-- [ ] Support zoom/pan.
+- [x] Support zoom/pan. (native `GraphEdit` behavior, no work needed)
 - [ ] Support Undo/Redo.
 - [ ] Highlight `Entry`.
-- [ ] Visually distinguish node types.
-- [ ] Display validation errors.
+- [ ] Visually distinguish node types. (currently: title shows the class name, but no color-coding yet)
+- [ ] Display validation errors. (`ConversationGraph::validate()` exists from Phase 11; not wired into the editor UI yet)
+
+**Not yet complete** — the tasks above cover read-only visualization only. Creating/editing/deleting nodes and connections, property editing, and position persistence are still ahead.
+
+### Notes from building the read-only visualizer
+
+- **All GDExtension resource classes needed `#[class(tool, ...)]`** to be usable from any editor-context code (`EditorScript`, and critically `EditorPlugin`) at all — without it, every property/method access silently returns a non-functional "placeholder instance." This is a real gdext requirement, not a caching issue (confirmed against gdext's own docs), and was a prerequisite fix applied to every node type and `ConversationGraph` before this phase could start.
+- **Main-screen placement, not a bottom panel** — a bottom panel felt cramped for something that wants real canvas space; `EditorInterface.get_editor_main_screen()` (a `VBoxContainer`) plus `_has_main_screen()`/`_get_plugin_name()`/`_get_plugin_icon()` gives a proper top-level tab instead. That container silently gives children `0` height unless the child's `size_flags_vertical` is set to `SIZE_EXPAND_FILL` *before* `add_child()` — setting it in the child's own `_ready()` wasn't reliably enough; a `custom_minimum_size` floor was added too as a forcing fallback.
+- **`GraphEdit.get_children()` includes GraphEdit's own internal nodes** (its `connections_layer`, etc.), not just the `GraphNode`s we add — blindly `queue_free()`-ing every child on rebuild destroyed GraphEdit's own internals ("connections_layer is missing" errors on every redraw). Fixed by filtering to `if child is GraphNode`.
+- **`queue_free()` is deferred** — rebuilding immediately after (e.g. switching to a different `ConversationGraph` quickly) could leave an old same-named node alive long enough that Godot auto-renamed the new one to avoid a collision, silently breaking `connect_node()` for that node. Fixed by using immediate `free()` for our own cleanup instead.
+- **A freshly-created `GraphNode` doesn't auto-shrink to its content** — `reset_size()` is needed after adding content, otherwise nodes render far larger than their actual text needs.
+- **Layout is a DFS assigning the longest acyclic path length from `Entry`** (`_dfs_layer`), not BFS shortest-path: shortest-path put `End`/merge points too early, forcing connections from longer branches to curve backward. The DFS explicitly skips edges back to an *ancestor* on the current path (a genuine cycle, e.g. via `Restart`) so a loop can never push itself rightward without bound, while still allowing a *longer independent* path to push a shared convergence point further right (which is what fixes the backward-curve problem). All `End` nodes are then forced to one shared trailing layer.
+- **Design decision (informed by how Unreal's Blueprint editor works, since UEFN's own exact behavior isn't something we have verified specifics on):** most node-graph editors don't auto-layout on every load — they persist last-dragged positions and treat "arrange" as a manual, user-triggered action (Unreal even has a targeted "Straighten Connections" action, not just a global re-layout). We're following that model going forward rather than trying to perfect automatic layout for every topology (e.g. multiple disconnected islands, which a `Reroute`-heavy or mid-edit graph can easily produce): the DFS layout above only positions nodes still at the default `Vector2.ZERO` (never manually placed); the next stage is real drag-to-move persistence, with manual "Arrange"/"Straighten Connections" actions layered on top rather than a smarter automatic multi-island layout.
 
 ## Milestone
 
 - [ ] A conversation can be created from scratch without manually editing raw resources.
+
+Not reached yet — still read-only.
 
 ---
 
