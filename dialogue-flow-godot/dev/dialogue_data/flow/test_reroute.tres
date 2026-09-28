@@ -1,4 +1,4 @@
-[gd_resource type="ConversationGraph" format=3 uid="uid://dppqdctksa7yq"]
+[gd_resource type="ConversationGraph" format=3]
 
 [sub_resource type="EntryNode" id="EntryNode_5a104"]
 id = "entry"
@@ -6,26 +6,31 @@ next_id = "loop_point"
 
 [sub_resource type="RerouteNode" id="RerouteNode_vcinv"]
 id = "loop_point"
+editor_position = Vector2(400, 0)
 next_id = "speech_ask"
 
 [sub_resource type="SpeechNode" id="SpeechNode_8tpya"]
 id = "speech_ask"
+editor_position = Vector2(800, 0)
 speaker = "NPC"
 text = "Loop again?"
 response_ids = Array[String](["resp_yes", "resp_no"])
 
 [sub_resource type="ResponseNode" id="ResponseNode_8cib1"]
 id = "resp_yes"
+editor_position = Vector2(1200, 0)
 text = "Yes."
 next_id = "loop_point"
 
 [sub_resource type="ResponseNode" id="ResponseNode_5a104"]
 id = "resp_no"
+editor_position = Vector2(1200, 95)
 text = "No."
 next_id = "end"
 
 [sub_resource type="EndNode" id="EndNode_8tpya"]
 id = "end"
+editor_position = Vector2(2000, 0)
 
 [resource]
 nodes = Array[Resource]([SubResource("EntryNode_5a104"), SubResource("RerouteNode_vcinv"), SubResource("SpeechNode_8tpya"), SubResource("ResponseNode_8cib1"), SubResource("ResponseNode_5a104"), SubResource("EndNode_8tpya")])

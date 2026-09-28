@@ -1,4 +1,4 @@
-[gd_resource type="ConversationGraph" format=3 uid="uid://b3du6ud6wo66n"]
+[gd_resource type="ConversationGraph" format=3]
 
 [sub_resource type="EntryNode" id="EntryNode_861hx"]
 id = "entry"
@@ -6,28 +6,33 @@ next_id = "speech_main"
 
 [sub_resource type="SpeechNode" id="SpeechNode_hc62e"]
 id = "speech_main"
+editor_position = Vector2(400, 0)
 speaker = "Merchant"
 text = "\"What'll it be?"
 response_ids = Array[String](["resp_buy", "resp_leave", "resp_secret"])
 
 [sub_resource type="ResponseNode" id="ResponseNode_5kwg7"]
 id = "resp_buy"
+editor_position = Vector2(800, 0)
 text = "Buy something."
 next_id = "end"
 
 [sub_resource type="ResponseNode" id="ResponseNode_win0g"]
 id = "resp_leave"
+editor_position = Vector2(800, 95)
 text = "Leave."
 next_id = "end"
 
 [sub_resource type="ResponseNode" id="ResponseNode_m0qcf"]
 id = "resp_secret"
+editor_position = Vector2(800, 190)
 text = "Show me the secret stock."
 required_variable = &"has_key"
 next_id = "end"
 
 [sub_resource type="EndNode" id="EndNode_adyso"]
 id = "end"
+editor_position = Vector2(1600, 0)
 
 [resource]
 nodes = Array[Resource]([SubResource("EntryNode_861hx"), SubResource("SpeechNode_hc62e"), SubResource("ResponseNode_5kwg7"), SubResource("ResponseNode_win0g"), SubResource("ResponseNode_m0qcf"), SubResource("EndNode_adyso")])

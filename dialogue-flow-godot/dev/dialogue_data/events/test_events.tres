@@ -1,4 +1,4 @@
-[gd_resource type="ConversationGraph" format=3 uid="uid://b5hjp3qjlr3w8"]
+[gd_resource type="ConversationGraph" format=3]
 
 [sub_resource type="EntryNode" id="EntryNode_nllvp"]
 id = "entry"
@@ -6,6 +6,7 @@ next_id = "event_give_key"
 
 [sub_resource type="EventNode" id="EventNode_j8vyx"]
 id = "event_give_key"
+editor_position = Vector2(400, 0)
 event_name = &"give_key"
 payload = Dictionary[String, Variant]({
 "amount": 1
@@ -14,17 +15,20 @@ next_id = "speech_after"
 
 [sub_resource type="SpeechNode" id="SpeechNode_7o8b8"]
 id = "speech_after"
+editor_position = Vector2(800, 0)
 speaker = "Guard"
 text = "Here, take this."
 response_ids = Array[String](["continue"])
 
 [sub_resource type="ResponseNode" id="ResponseNode_6v4q1"]
 id = "continue"
+editor_position = Vector2(1200, 0)
 text = "Continue..."
 next_id = "end"
 
 [sub_resource type="EndNode" id="EndNode_xaqlj"]
 id = "end"
+editor_position = Vector2(2000, 0)
 
 [resource]
 nodes = Array[Resource]([SubResource("EntryNode_nllvp"), SubResource("EventNode_j8vyx"), SubResource("SpeechNode_7o8b8"), SubResource("ResponseNode_6v4q1"), SubResource("EndNode_xaqlj")])

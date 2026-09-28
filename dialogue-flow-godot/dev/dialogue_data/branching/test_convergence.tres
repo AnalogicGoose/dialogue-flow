@@ -1,4 +1,4 @@
-[gd_resource type="ConversationGraph" format=3 uid="uid://cmqqc18e5ma3a"]
+[gd_resource type="ConversationGraph" format=3]
 
 [sub_resource type="EntryNode" id="EntryNode_dfd1y"]
 id = "entry"
@@ -6,71 +6,84 @@ next_id = "speech_a"
 
 [sub_resource type="SpeechNode" id="SpeechNode_eqrk7"]
 id = "speech_a"
+editor_position = Vector2(400, 0)
 speaker = "Guard"
 text = "Left or right?"
 response_ids = Array[String](["resp_left", "resp_right"])
 
 [sub_resource type="ResponseNode" id="ResponseNode_l40sh"]
 id = "resp_left"
+editor_position = Vector2(800, 0)
 text = "Left."
 next_id = "speech_left1"
 
 [sub_resource type="ResponseNode" id="ResponseNode_im6ca"]
 id = "resp_right"
+editor_position = Vector2(800, 95)
 text = "Right."
 next_id = "speech_right1"
 
 [sub_resource type="SpeechNode" id="SpeechNode_77186"]
 id = "speech_left1"
+editor_position = Vector2(1200, 0)
 speaker = "Narrator"
 text = "You walk down the left path."
 response_ids = Array[String](["continue_left"])
 
 [sub_resource type="SpeechNode" id="SpeechNode_ncrrm"]
 id = "speech_right1"
+editor_position = Vector2(1200, 95)
 speaker = "Narrator"
 text = "You walk down the right path."
 response_ids = Array[String](["continue_right"])
 
 [sub_resource type="ResponseNode" id="ResponseNode_2gc3y"]
 id = "continue_left"
+editor_position = Vector2(1600, 0)
 text = "Continue..."
 next_id = "speech_merge"
 
 [sub_resource type="ResponseNode" id="ResponseNode_s3apa"]
 id = "continue_right"
+editor_position = Vector2(1600, 95)
 text = "Continue..."
 next_id = "speech_merge"
 
 [sub_resource type="SpeechNode" id="SpeechNode_i658u"]
 id = "speech_merge"
+editor_position = Vector2(2000, 0)
 speaker = "Narrator"
 text = "Both paths lead to a locked door."
 response_ids = Array[String](["resp_knock", "resp_leave"])
 
 [sub_resource type="ResponseNode" id="ResponseNode_88l4s"]
 id = "resp_knock"
+editor_position = Vector2(2400, 0)
 text = "Knock."
 next_id = "speech_knock"
 
 [sub_resource type="ResponseNode" id="ResponseNode_kdwax"]
 id = "resp_leave"
+editor_position = Vector2(2400, 95)
 text = "Leave."
 next_id = "end"
 
 [sub_resource type="SpeechNode" id="SpeechNode_22a5i"]
 id = "speech_knock"
+editor_position = Vector2(2800, 0)
 speaker = "Narrator"
 text = "The door creaks open."
 response_ids = Array[String](["continue_knock"])
 
 [sub_resource type="ResponseNode" id="ResponseNode_0vfwv"]
 id = "continue_knock"
+editor_position = Vector2(3200, 0)
 text = "Continue..."
 next_id = "end"
 
 [sub_resource type="EndNode" id="EndNode_t7q1o"]
 id = "end"
+editor_position = Vector2(4000, 0)
 
 [resource]
 nodes = Array[Resource]([SubResource("EntryNode_dfd1y"), SubResource("SpeechNode_eqrk7"), SubResource("ResponseNode_l40sh"), SubResource("ResponseNode_im6ca"), SubResource("SpeechNode_77186"), SubResource("SpeechNode_ncrrm"), SubResource("ResponseNode_2gc3y"), SubResource("ResponseNode_s3apa"), SubResource("SpeechNode_i658u"), SubResource("ResponseNode_88l4s"), SubResource("ResponseNode_kdwax"), SubResource("SpeechNode_22a5i"), SubResource("ResponseNode_0vfwv"), SubResource("EndNode_t7q1o")])

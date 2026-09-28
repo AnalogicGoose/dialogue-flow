@@ -1,4 +1,4 @@
-[gd_resource type="ConversationGraph" format=3 uid="uid://umbtnfp67cr1"]
+[gd_resource type="ConversationGraph" format=3]
 
 [sub_resource type="EntryNode" id="EntryNode_lygex"]
 id = "entry"
@@ -6,47 +6,56 @@ next_id = "speech_a"
 
 [sub_resource type="SpeechNode" id="SpeechNode_ohn7a"]
 id = "speech_a"
+editor_position = Vector2(400, 0)
 speaker = "Guard"
 text = "Which way will you go?"
 response_ids = Array[String](["resp_left", "resp_right"])
 
 [sub_resource type="ResponseNode" id="ResponseNode_4xw8n"]
 id = "resp_left"
+editor_position = Vector2(800, 0)
 text = "I'll go left."
 next_id = "speech_b"
 
 [sub_resource type="ResponseNode" id="ResponseNode_wwd1j"]
 id = "resp_right"
+editor_position = Vector2(800, 95)
 text = "I'll go right."
 next_id = "speech_c"
 
 [sub_resource type="SpeechNode" id="SpeechNode_wwmbg"]
 id = "speech_b"
+editor_position = Vector2(1200, 0)
 speaker = "Narrator"
 text = "You head left into the forest."
 response_ids = Array[String](["continue_b"])
 
 [sub_resource type="SpeechNode" id="SpeechNode_8nwlo"]
 id = "speech_c"
+editor_position = Vector2(1200, 95)
 speaker = "Narrator"
 text = "You head right into the caves."
 response_ids = Array[String](["continue_c"])
 
 [sub_resource type="ResponseNode" id="ResponseNode_2lsyx"]
 id = "continue_b"
+editor_position = Vector2(1600, 0)
 text = "Continue..."
 next_id = "end_b"
 
 [sub_resource type="ResponseNode" id="ResponseNode_gdqmt"]
 id = "continue_c"
+editor_position = Vector2(1600, 95)
 text = "Continue..."
 next_id = "end_c"
 
 [sub_resource type="EndNode" id="EndNode_1htot"]
 id = "end_b"
+editor_position = Vector2(2400, 0)
 
 [sub_resource type="EndNode" id="EndNode_bjwf2"]
 id = "end_c"
+editor_position = Vector2(2400, 95)
 
 [resource]
 nodes = Array[Resource]([SubResource("EntryNode_lygex"), SubResource("SpeechNode_ohn7a"), SubResource("ResponseNode_4xw8n"), SubResource("ResponseNode_wwd1j"), SubResource("SpeechNode_wwmbg"), SubResource("SpeechNode_8nwlo"), SubResource("ResponseNode_2lsyx"), SubResource("ResponseNode_gdqmt"), SubResource("EndNode_1htot"), SubResource("EndNode_bjwf2")])

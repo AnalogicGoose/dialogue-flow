@@ -14,20 +14,24 @@ weight = 1.0
 
 [sub_resource type="RandomNode" id="RandomNode_1"]
 id = "rnd"
+editor_position = Vector2(400, 0)
 branches = Array[RandomBranch]([SubResource("RandomBranch_1"), SubResource("RandomBranch_2")])
 
 [sub_resource type="EventNode" id="EventNode_1"]
 id = "event_a"
+editor_position = Vector2(800, 0)
 event_name = &"picked_a"
 next_id = "end"
 
 [sub_resource type="EventNode" id="EventNode_2"]
 id = "event_b"
+editor_position = Vector2(800, 95)
 event_name = &"picked_b"
 next_id = "end"
 
 [sub_resource type="EndNode" id="EndNode_1"]
 id = "end"
+editor_position = Vector2(1600, 0)
 
 [resource]
 nodes = Array[Resource]([SubResource("EntryNode_1"), SubResource("RandomNode_1"), SubResource("EventNode_1"), SubResource("EventNode_2"), SubResource("EndNode_1")])

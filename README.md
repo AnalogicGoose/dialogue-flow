@@ -423,7 +423,7 @@ Completed so far:
 - [x] `RandomNode`, `RestartNode`, and `RerouteNode` implemented: weighted random branches, looping back to `Entry`, and a transparent passthrough node, all verified against the real project
 - [x] `ConversationGraph::validate()` implemented: static checks for missing/duplicate `Entry`, dangling/illegal edges, invalid response targets, unreachable nodes, and cycles with no pausing node — caught a real, previously-undetected bug in existing test content
 
-**In progress (Phase 12):** a custom `EditorPlugin` (`addons/dialogue_flow/editor/`) renders any `ConversationGraph` as a read-only graph on its own main-screen tab — nodes, connections, and an automatic left-to-right layout by longest path from `Entry`. Creating/editing/deleting nodes and connections, property editing, and position persistence are still ahead; see the roadmap for details and the bugs found along the way.
+**In progress (Phase 12):** a custom `EditorPlugin` (`addons/dialogue_flow/editor/`) renders any `ConversationGraph` as a read-only graph on its own main-screen tab, reading each node's saved `editor_position` directly. Every existing test graph in `dev/dialogue_data/` had real positions baked in with a one-time headless layout pass; creating/editing/deleting nodes and connections, property editing, and real move-persistence for new work are still ahead — see the roadmap for details and the bugs found along the way.
 
 ---
 

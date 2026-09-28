@@ -1,4 +1,4 @@
-[gd_resource type="ConversationGraph" format=3 uid="uid://bmnjh6ich6l4y"]
+[gd_resource type="ConversationGraph" format=3]
 
 [sub_resource type="EntryNode" id="EntryNode_jftgv"]
 id = "entry"
@@ -6,29 +6,34 @@ next_id = "cond_has_pass"
 
 [sub_resource type="ConditionNode" id="ConditionNode_7ibrv"]
 id = "cond_has_pass"
+editor_position = Vector2(400, 0)
 variable_name = &"has_pass"
 true_id = "speech_enter"
 false_id = "speech_leave"
 
 [sub_resource type="SpeechNode" id="SpeechNode_oswv6"]
 id = "speech_enter"
+editor_position = Vector2(800, 0)
 speaker = "Guard"
 text = "Enter."
 response_ids = Array[String](["end_r"])
 
 [sub_resource type="SpeechNode" id="SpeechNode_0ps31"]
 id = "speech_leave"
+editor_position = Vector2(800, 95)
 speaker = "Guard"
 text = "Leave."
 response_ids = Array[String](["end_r"])
 
 [sub_resource type="ResponseNode" id="ResponseNode_awl11"]
 id = "end_r"
+editor_position = Vector2(1200, 0)
 text = "..."
 next_id = "end"
 
 [sub_resource type="EndNode" id="EndNode_ta3pi"]
 id = "end"
+editor_position = Vector2(2000, 0)
 
 [resource]
 nodes = Array[Resource]([SubResource("EntryNode_jftgv"), SubResource("ConditionNode_7ibrv"), SubResource("SpeechNode_oswv6"), SubResource("SpeechNode_0ps31"), SubResource("ResponseNode_awl11"), SubResource("EndNode_ta3pi")])

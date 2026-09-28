@@ -1,4 +1,4 @@
-[gd_resource type="ConversationGraph" format=3 uid="uid://u7o37irv23fc"]
+[gd_resource type="ConversationGraph" format=3]
 
 [sub_resource type="EntryNode" id="EntryNode_uw4dd"]
 id = "entry"
@@ -6,23 +6,27 @@ next_id = "speech_1"
 
 [sub_resource type="SpeechNode" id="SpeechNode_lntng"]
 id = "speech_1"
+editor_position = Vector2(400, 0)
 speaker = "Guard"
 text = "Halt! Who goes there?"
 response_ids = Array[String](["response_1"])
 
 [sub_resource type="ResponseNode" id="ResponseNode_i5k64"]
 id = "response_1"
+editor_position = Vector2(800, 0)
 text = "Just passing through."
 next_id = "speech_2"
 
 [sub_resource type="SpeechNode" id="SpeechNode_vcl2t"]
 id = "speech_2"
+editor_position = Vector2(1200, 0)
 speaker = "Guard"
 text = "Move along, then."
 fallback_id = "end_1"
 
 [sub_resource type="EndNode" id="EndNode_kkmnp"]
 id = "end_1"
+editor_position = Vector2(2000, 0)
 
 [resource]
 nodes = Array[Resource]([SubResource("EntryNode_uw4dd"), SubResource("SpeechNode_lntng"), SubResource("ResponseNode_i5k64"), SubResource("SpeechNode_vcl2t"), SubResource("EndNode_kkmnp")])
