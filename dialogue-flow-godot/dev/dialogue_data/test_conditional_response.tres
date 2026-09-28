@@ -1,0 +1,33 @@
+[gd_resource type="ConversationGraph" format=3 uid="uid://b3du6ud6wo66n"]
+
+[sub_resource type="EntryNode" id="EntryNode_861hx"]
+id = "entry"
+next_id = "speech_main"
+
+[sub_resource type="SpeechNode" id="SpeechNode_hc62e"]
+id = "speech_main"
+speaker = "Merchant"
+text = "\"What'll it be?"
+response_ids = Array[String](["resp_buy", "resp_leave", "resp_secret"])
+
+[sub_resource type="ResponseNode" id="ResponseNode_5kwg7"]
+id = "resp_buy"
+text = "Buy something."
+next_id = "end"
+
+[sub_resource type="ResponseNode" id="ResponseNode_win0g"]
+id = "resp_leave"
+text = "Leave."
+next_id = "end"
+
+[sub_resource type="ResponseNode" id="ResponseNode_m0qcf"]
+id = "resp_secret"
+text = "Show me the secret stock."
+required_variable = &"has_key"
+next_id = "end"
+
+[sub_resource type="EndNode" id="EndNode_adyso"]
+id = "end"
+
+[resource]
+nodes = Array[Resource]([SubResource("EntryNode_861hx"), SubResource("SpeechNode_hc62e"), SubResource("ResponseNode_5kwg7"), SubResource("ResponseNode_win0g"), SubResource("ResponseNode_m0qcf"), SubResource("EndNode_adyso")])

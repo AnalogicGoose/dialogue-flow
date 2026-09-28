@@ -9,6 +9,7 @@ func _ready() -> void:
 	controller.event_emitted.connect(func(event_name, payload): print("EVENT: %s %s" % [event_name, payload]))
 	controller.speech_changed.connect(_on_speech_changed)
 	controller.responses_changed.connect(_on_responses_changed)
+	controller.set_value("has_key", true)
 	
 	controller.start()
 

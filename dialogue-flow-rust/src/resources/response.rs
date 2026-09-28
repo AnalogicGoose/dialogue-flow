@@ -17,6 +17,11 @@ pub struct ResponseNode {
     #[export(multiline)]
     pub text: GString,
 
+    /// If set, this response is only offered when this state variable is
+    /// truthy — an unset or empty name means always visible.
+    #[export]
+    pub required_variable: StringName,
+
     /// Target node ID. Must not point at another `EntryNode` or a `ResponseNode`.
     #[export]
     pub next_id: GString,

@@ -10,7 +10,8 @@ use godot::classes::{Node, Resource};
 use godot::prelude::*;
 
 use crate::resources::{
-    ConversationGraph, EndNode, EntryNode, EventNode, ResponseNode, SpeechNode, WaitForEventNode
+    ConditionNode, ConversationGraph, EndNode, EntryNode, EventNode, ResponseNode, SpeechNode,
+    WaitForEventNode,
 };
 
 const MAX_AUTOMATIC_STEPS: u32 = 1000;
@@ -29,6 +30,11 @@ pub struct DialogueController {
     current_id: GString,
     node_index: HashMap<GString, Gd<Resource>>,
     running: bool,
+
+    /// Named runtime state. Persists across start()/stop()/cancel() —
+    /// it belongs to this controller instance, not to a single
+    /// conversation run.
+    state: HashMap<StringName, Variant>,
 }
 
 #[godot_api]
@@ -40,6 +46,7 @@ impl INode for DialogueController {
             current_id: GString::new(),
             node_index: HashMap::new(),
             running: false,
+            state: HashMap::new(),
         }
     }
 }
@@ -132,12 +139,41 @@ impl DialogueController {
         };
 
         let response_ids = speech.bind().response_ids.clone();
-        let Some(response_id) = response_ids.get(index as usize) else {
+        let visible_ids = self.visible_response_ids(&response_ids);
+        let Some(response_id) = visible_ids.get(index as usize).cloned() else {
             godot_error!("DialogueController.choose(): index {} out of range", index);
             return;
         };
 
         self.enter(response_id, 0);
+    }
+
+    /// Filters `response_ids` down to the ones currently visible: a
+    /// `ResponseNode` with no `required_variable` is always visible; one
+    /// with a `required_variable` is only visible while that state
+    /// variable is truthy. Used identically when building the displayed
+    /// list and when resolving `choose(index)`, so the two never disagree.
+    fn visible_response_ids(&self, response_ids: &Array<GString>) -> Vec<GString> {
+        response_ids
+            .iter_shared()
+            .filter(|rid| {
+                let Some(node) = self.node_index.get(rid) else {
+                    return false;
+                };
+                let Ok(response) = node.clone().try_cast::<ResponseNode>() else {
+                    return false;
+                };
+                let required = response.bind().required_variable.clone();
+                if required.is_empty() {
+                    return true;
+                }
+                self.state
+                    .get(&required)
+                    .cloned()
+                    .unwrap_or(Variant::nil())
+                    .booleanize()
+            })
+            .collect()
     }
 
     /// Delivers an external event. Ignored (not an error) if no dialogue
@@ -165,6 +201,18 @@ impl DialogueController {
             return;
         }
         self.enter(next_id, 0);
+    }
+
+    /// Sets a named state value. Persists across start()/stop()/cancel().
+    #[func]
+    pub fn set_value(&mut self, name: StringName, value: Variant) {
+        self.state.insert(name, value);
+    }
+
+    /// Reads a named state value, or `null` if it was never set.
+    #[func]
+    pub fn get_value(&self, name: StringName) -> Variant {
+        self.state.get(&name).cloned().unwrap_or(Variant::nil())
     }
 
     fn reset(&mut self) {
@@ -211,12 +259,17 @@ impl DialogueController {
             self.base_mut()
                 .emit_signal("speech_changed", &[speaker.to_variant(), text.to_variant()]);
 
-            if response_ids.is_empty() {
+            let visible_ids = self.visible_response_ids(&response_ids);
+            if visible_ids.is_empty() {
+                // Also covers "had responses, but all are currently hidden" —
+                // treated the same as having none, so a Speech with only
+                // conditional responses never dead-ends as long as it also
+                // has a fallback_id.
                 self.enter(fallback_id, steps + 1);
             } else {
-                let response_texts: Array<GString> = response_ids
-                    .iter_shared()
-                    .filter_map(|rid| self.node_index.get(&rid).cloned())
+                let response_texts: Array<GString> = visible_ids
+                    .iter()
+                    .filter_map(|rid| self.node_index.get(rid).cloned())
                     .filter_map(|n| n.try_cast::<ResponseNode>().ok())
                     .map(|r| r.bind().text.clone())
                     .collect();
@@ -238,6 +291,20 @@ impl DialogueController {
                 "event_emitted",
                 &[event_name.to_variant(), payload.to_variant()],
             );
+            self.enter(next_id, steps + 1);
+        } else if class == "ConditionNode" {
+            let condition = node.try_cast::<ConditionNode>().unwrap();
+            let (variable_name, true_id, false_id) = {
+                let bound = condition.bind();
+                (
+                    bound.variable_name.clone(),
+                    bound.true_id.clone(),
+                    bound.false_id.clone(),
+                )
+            };
+            // An unset variable is nil, which booleanize()s to false.
+            let value = self.state.get(&variable_name).cloned().unwrap_or(Variant::nil());
+            let next_id = if value.booleanize() { true_id } else { false_id };
             self.enter(next_id, steps + 1);
         } else if class == "WaitForEventNode" {
             // Clears any stale response buttons left over from before the pause.

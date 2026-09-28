@@ -29,7 +29,7 @@
 - [x] Phase 6 — Branch convergence
 - [x] Phase 7 — Outgoing events
 - [x] Phase 8 — Incoming events
-- [ ] Phase 9 — State & conditions
+- [x] Phase 9 — State & conditions
 - [ ] Phase 10 — Additional flow nodes
 - [ ] Phase 11 — Graph validation
 - [ ] Phase 12 — Visual Godot graph editor
@@ -467,14 +467,14 @@ Add automatic branching based on runtime state.
 
 ## Tasks
 
-- [ ] Define dialogue context/state model.
-- [ ] Support named values/variables.
-- [ ] Implement `Condition`.
-- [ ] Add true branch.
-- [ ] Add false branch.
-- [ ] Allow external systems to modify dialogue state.
-- [ ] Define supported basic value types.
-- [ ] Keep game-specific logic outside the dialogue system.
+- [x] Define dialogue context/state model. A `HashMap<StringName, Variant>` owned by each `DialogueController` instance — state belongs to the controller, not to a single conversation run.
+- [x] Support named values/variables. (`set_value`/`get_value`)
+- [x] Implement `Condition`. (`ConditionNode`, `dialogue-flow-rust/src/resources/condition.rs`)
+- [x] Add true branch.
+- [x] Add false branch.
+- [x] Allow external systems to modify dialogue state. (`DialogueController::set_value`, public `#[func]`)
+- [x] Define supported basic value types. Anything `Variant` can hold is technically storable, but the intended authored set is `bool`/`int`/`float`/`String` — simple values a `Condition` can meaningfully branch on.
+- [x] Keep game-specific logic outside the dialogue system. (the runtime only checks truthiness; it never interprets what a variable *means*)
 
 ## Example
 
@@ -490,7 +490,41 @@ Condition: has_pass
 
 ## Milestone
 
-- [ ] Conversation can branch automatically according to external/runtime state.
+- [x] Conversation can branch automatically according to external/runtime state.
+
+Verified with `dev/dialogue_data/test_condition.tres` (the roadmap's own
+`has_pass` example): unset, true, and false all branch correctly, and
+state was confirmed to persist across `cancel()`/`start()`, driven
+directly through `DialogueController` against the real project.
+
+## Extension: Conditional Response Visibility
+
+Not an original Phase 9 task, but added here because it directly reuses
+everything this phase built: a `ResponseNode` can set
+`required_variable: StringName` (empty = always visible) so a single
+`Speech` can offer a response only once some state variable is truthy —
+e.g. a "Show me the secret stock." option that only appears once
+`has_key` is set. This is distinct from `Condition`, which branches the
+*entire path* before a `Speech`; this instead hides/shows individual
+options *within* one `Speech`'s response list, letting "complete
+branches" (whatever a hidden response leads to) become available only
+once something has happened — closer to how UEFN's dialogue options can
+be conditionally gated.
+
+Two consequences worth remembering:
+- `choose(index)` and the displayed list must filter *identically*
+  (`DialogueController::visible_response_ids`), or a hidden response
+  shifting the list would make `choose()` pick the wrong node.
+- If **all** of a `Speech`'s responses are currently hidden, it's treated
+  the same as having none at all and falls through to `fallback_id` —
+  so a `Speech` with only conditional options never dead-ends as long as
+  it also has a fallback.
+
+Verified with `dev/dialogue_data/test_conditional_response.tres`: a
+Merchant's third response ("Show me the secret stock.") only appears once
+`has_key` is set, index selection stays correct in both states, and (from
+an earlier scratch test) a `Speech` with only a hidden response correctly
+falls through to its `fallback_id`.
 
 ---
 
@@ -660,6 +694,11 @@ covered by the planned `Event` node (Phase 7) — a `StringName` identifier
 plus optional payload, surfaced through `event_emitted`. No new node type
 is needed for this; it just needs Phase 7 to actually land with a real
 payload, not a stub.
+
+Confirmed during Phase 9: the `dialogue_finished(end_id)` gap is a
+deliberate stay-in-order decision, not an oversight — asked directly
+whether to pull it forward, and the choice was to leave it here rather
+than jump ahead.
 
 ## Documentation & Encapsulation
 

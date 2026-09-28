@@ -237,7 +237,9 @@ Current project structure:
 │           ├── test_branching.tres
 │           ├── test_convergence.tres
 │           ├── test_events.tres
-│           └── test_wait_event.tres
+│           ├── test_wait_event.tres
+│           ├── test_condition.tres
+│           └── test_conditional_response.tres
 │
 ├── dialogue-flow-rust/
 │   ├── Cargo.lock
@@ -254,6 +256,7 @@ Current project structure:
 │       │   ├── end.rs
 │       │   ├── event.rs
 │       │   ├── wait_for_event.rs
+│       │   ├── condition.rs
 │       │   └── graph.rs
 │       └── runtime/
 │           └── mod.rs
@@ -370,8 +373,8 @@ The roadmap is the project's source of truth and contains:
 
 ## Current Status
 
-**Phases 0-8 are complete.** The project is moving into
-**Phase 9 — State & Conditions**.
+**Phases 0-9 are complete.** The project is moving into
+**Phase 10 — Additional Flow Nodes**.
 
 Completed so far:
 
@@ -399,6 +402,8 @@ Completed so far:
 - [x] Branch convergence verified: independent branches reunite into the same node with no `MergeNode`, then branch again from the merge point
 - [x] `EventNode` implemented: fires a named event with an optional payload (`event_emitted`) and continues traversal automatically, with no game-specific logic in the dialogue module
 - [x] `WaitForEventNode` and `receive_event()` implemented: dialogue can pause until a matching external event arrives, ignoring unrelated events and idle calls safely
+- [x] `ConditionNode` and `set_value()`/`get_value()` implemented: conversations branch on named state that persists across `start()`/`stop()`/`cancel()`
+- [x] Conditional response visibility: a `Response` can require a state variable to be truthy to appear, with index selection kept consistent between what's displayed and what's chosen
 
 ---
 

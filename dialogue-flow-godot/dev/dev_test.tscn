@@ -1,7 +1,7 @@
 [gd_scene format=3 uid="uid://yr8lhen85sto"]
 
 [ext_resource type="Script" uid="uid://1cvb6qv2jfec" path="res://dev/dev_test.gd" id="1_ajqos"]
-[ext_resource type="ConversationGraph" uid="uid://bwnfktjv71ien" path="res://dev/dialogue_data/test_wait_event.tres" id="2_2lsyx"]
+[ext_resource type="ConversationGraph" uid="uid://b3du6ud6wo66n" path="res://dev/dialogue_data/test_conditional_response.tres" id="2_2lsyx"]
 [ext_resource type="PackedScene" uid="uid://bbfkyiinape87" path="res://addons/dialogue_flow/dialogue_ui.tscn" id="3_2lsyx"]
 
 [node name="Node2D" type="Node2D" unique_id=1584412623]
