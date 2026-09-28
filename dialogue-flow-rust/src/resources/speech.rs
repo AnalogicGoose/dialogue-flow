@@ -7,7 +7,7 @@ use godot::prelude::*;
 /// responses present, traversal pauses for `choose()`; with none, it
 /// continues automatically via `fallback_id`.
 #[derive(GodotClass)]
-#[class(init, base=Resource)]
+#[class(tool, init, base=Resource)]
 pub struct SpeechNode {
     base: Base<Resource>,
 

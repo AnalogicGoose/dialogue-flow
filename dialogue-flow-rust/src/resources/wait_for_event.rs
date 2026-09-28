@@ -4,7 +4,7 @@ use godot::prelude::*;
 /// Pauses traversal until a matching event arrives via
 /// `DialogueController::receive_event`.
 #[derive(GodotClass)]
-#[class(init, base=Resource)]
+#[class(tool, init, base=Resource)]
 pub struct WaitForEventNode {
     base: Base<Resource>,
 

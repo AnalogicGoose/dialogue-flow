@@ -3,7 +3,7 @@ use godot::prelude::*;
 
 /// Terminal node. No outgoing edge; reaching it ends the conversation.
 #[derive(GodotClass)]
-#[class(init, base=Resource)]
+#[class(tool, init, base=Resource)]
 pub struct EndNode {
     base: Base<Resource>,
 

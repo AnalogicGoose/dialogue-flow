@@ -5,7 +5,7 @@ use godot::prelude::*;
 /// rules — false/0/0.0/""/empty containers/nil are false, everything else
 /// true). An unset variable is nil, so it takes the false branch.
 #[derive(GodotClass)]
-#[class(init, base=Resource)]
+#[class(tool, init, base=Resource)]
 pub struct ConditionNode {
     base: Base<Resource>,
 

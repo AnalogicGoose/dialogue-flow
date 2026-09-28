@@ -5,7 +5,7 @@ use godot::prelude::*;
 /// Doesn't know or care what the event means — that's up to whatever
 /// listens to `DialogueController.event_emitted`.
 #[derive(GodotClass)]
-#[class(init, base=Resource)]
+#[class(tool, init, base=Resource)]
 pub struct EventNode {
     base: Base<Resource>,
 

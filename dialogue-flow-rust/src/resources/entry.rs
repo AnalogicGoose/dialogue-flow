@@ -4,7 +4,7 @@ use godot::prelude::*;
 /// Graph start marker. A `ConversationGraph` has exactly one; traversal
 /// always begins here.
 #[derive(GodotClass)]
-#[class(init, base=Resource)]
+#[class(tool, init, base=Resource)]
 pub struct EntryNode {
     base: Base<Resource>,
 

@@ -5,7 +5,7 @@ use godot::prelude::*;
 /// `SpeechNode` that lists its ID in `response_ids` — never targeted by a
 /// generic edge from another node.
 #[derive(GodotClass)]
-#[class(init, base=Resource)]
+#[class(tool, init, base=Resource)]
 pub struct ResponseNode {
     base: Base<Resource>,
 

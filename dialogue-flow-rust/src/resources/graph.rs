@@ -7,7 +7,7 @@ use godot::prelude::*;
 /// inheriting one custom class from another. Downcast with `Gd::try_cast`
 /// when a specific node kind is needed.
 #[derive(GodotClass)]
-#[class(init, base=Resource)]
+#[class(tool, init, base=Resource)]
 pub struct ConversationGraph {
     base: Base<Resource>,
 

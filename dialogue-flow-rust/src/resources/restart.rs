@@ -4,7 +4,7 @@ use godot::prelude::*;
 /// Jumps back to the graph's `Entry`. No stored target — the destination
 /// is always Entry, per the spec.
 #[derive(GodotClass)]
-#[class(init, base=Resource)]
+#[class(tool, init, base=Resource)]
 pub struct RestartNode {
     base: Base<Resource>,
 

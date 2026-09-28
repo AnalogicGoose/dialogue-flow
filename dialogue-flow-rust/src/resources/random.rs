@@ -3,7 +3,7 @@ use godot::prelude::*;
 
 /// One weighted option inside a RandomNode
 #[derive(GodotClass)]
-#[class(init, base=Resource)]
+#[class(tool, init, base=Resource)]
 pub struct RandomBranch {
     base: Base<Resource>,
 
@@ -17,7 +17,7 @@ pub struct RandomBranch {
 /// automatically. A branch with weight 0 (or all branches at 0) is
 /// effectively/entirely excluded.
 #[derive(GodotClass)]
-#[class(init, base=Resource)]
+#[class(tool, init, base=Resource)]
 pub struct RandomNode {
     base: Base<Resource>,
 
