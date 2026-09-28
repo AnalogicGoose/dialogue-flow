@@ -1,4 +1,4 @@
-[gd_resource type="ConversationGraph" format=3]
+[gd_resource type="ConversationGraph" format=3 uid="uid://5lyl2niydw3s"]
 
 [sub_resource type="EntryNode" id="EntryNode_5a104"]
 id = "entry"

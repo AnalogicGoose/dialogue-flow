@@ -26,6 +26,8 @@ func _apply_changes() -> void:
 	var err := ResourceSaver.save(current_graph, current_graph.resource_path)
 	if err != OK:
 		push_error("DialogueFlow: failed to save (%s)" % err)
+	else:
+		graph_editor.mark_saved()
 
 func _has_main_screen() -> bool:
 	return true

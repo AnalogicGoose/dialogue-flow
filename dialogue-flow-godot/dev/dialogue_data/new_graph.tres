@@ -1,0 +1,13 @@
+[gd_resource type="ConversationGraph" format=3 uid="uid://p4om5xqafci2"]
+
+[sub_resource type="EntryNode" id="EntryNode_gmqwm"]
+id = "entry_1"
+editor_position = Vector2(-240, 160)
+next_id = "end_1"
+
+[sub_resource type="EndNode" id="EndNode_xfmqv"]
+id = "end_1"
+editor_position = Vector2(220, 160)
+
+[resource]
+nodes = Array[Resource]([SubResource("EntryNode_gmqwm"), SubResource("EndNode_xfmqv")])

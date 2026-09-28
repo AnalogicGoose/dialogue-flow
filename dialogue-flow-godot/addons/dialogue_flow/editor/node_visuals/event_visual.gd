@@ -6,3 +6,6 @@ static func describe(node: Resource) -> String:
 
 static func outgoing_ids(node: Resource) -> Array[String]:
 	return [node.next_id]
+
+static func color() -> Color:
+	return Color(0.8, 0.5, 0.2)

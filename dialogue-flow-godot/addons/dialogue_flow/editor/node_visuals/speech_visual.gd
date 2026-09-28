@@ -9,3 +9,27 @@ static func outgoing_ids(node: Resource) -> Array[String]:
 	if node.fallback_id != "":
 		ids.append(node.fallback_id)
 	return ids
+
+static func color() -> Color:
+	return Color(0.2, 0.45, 0.75)
+
+static func can_connect_to(node: Resource, target: Resource) -> bool:
+	return not (target is EntryNode)
+
+static func connection_patch(node: Resource, target: Resource) -> Dictionary:
+	if target is ResponseNode:
+		if node.response_ids.has(target.id):
+			return {}
+		var new_ids: Array[String] = node.response_ids.duplicate()
+		new_ids.append(target.id)
+		return {"property": "response_ids", "value": new_ids}
+	return {"property": "fallback_id", "value": target.id}
+
+static func disconnection_patch(node: Resource, target_id: String) -> Dictionary:
+	if node.response_ids.has(target_id):
+		var new_ids: Array[String] = node.response_ids.duplicate()
+		new_ids.erase(target_id)
+		return {"property": "response_ids", "value": new_ids}
+	if node.fallback_id == target_id:
+		return {"property": "fallback_id", "value": ""}
+	return {}
