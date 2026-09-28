@@ -10,8 +10,8 @@ use godot::classes::{Node, Resource};
 use godot::prelude::*;
 
 use crate::resources::{
-    ConditionNode, ConversationGraph, EndNode, EntryNode, EventNode, ResponseNode, SpeechNode,
-    WaitForEventNode,
+    ConditionNode, ConversationGraph, EndNode, EntryNode, EventNode, RandomNode, RerouteNode,
+    ResponseNode, RestartNode, SpeechNode, WaitForEventNode,
 };
 
 const MAX_AUTOMATIC_STEPS: u32 = 1000;
@@ -88,13 +88,7 @@ impl DialogueController {
             .map(|node| (node_id(&node), node))
             .collect();
 
-        let entry_id = self
-            .node_index
-            .values()
-            .find(|node| node.get_class() == "EntryNode")
-            .map(node_id);
-
-        let Some(entry_id) = entry_id else {
+        let Some(entry_id) = self.find_entry_id() else {
             godot_error!("DialogueController.start(): conversation has no EntryNode");
             return;
         };
@@ -102,6 +96,13 @@ impl DialogueController {
         self.running = true;
         self.base_mut().emit_signal("dialogue_started", &[]);
         self.enter(entry_id, 0);
+    }
+
+    fn find_entry_id(&self) -> Option<GString> {
+        self.node_index
+            .values()
+            .find(|node| node.get_class() == "EntryNode")
+            .map(node_id)
     }
 
     /// Quiet reset, with no signal. Used for teardown/reuse.
@@ -305,6 +306,46 @@ impl DialogueController {
             // An unset variable is nil, which booleanize()s to false.
             let value = self.state.get(&variable_name).cloned().unwrap_or(Variant::nil());
             let next_id = if value.booleanize() { true_id } else { false_id };
+            self.enter(next_id, steps + 1);
+        } else if class == "RandomNode" {
+            let random = node.try_cast::<RandomNode>().unwrap();
+            let branches = random.bind().branches.clone();
+            let total_weight: f64 = branches.iter_shared().map(|b| b.bind().weight.max(0.0)).sum();
+            if total_weight <= 0.0 {
+                godot_error!(
+                    "DialogueController: RandomNode '{}' has no branches with positive weight",
+                    id
+                );
+                self.reset();
+                return;
+            }
+            let mut roll = godot::global::randf_range(0.0, total_weight);
+            let mut chosen = None;
+            for branch in branches.iter_shared() {
+                let bound = branch.bind();
+                let weight = bound.weight.max(0.0);
+                if roll < weight {
+                    chosen = Some(bound.target_id.clone());
+                    break;
+                }
+                roll -= weight;
+            }
+            let Some(next_id) = chosen else {
+                godot_error!("DialogueController: RandomNode '{}' failed to pick a branch", id);
+                self.reset();
+                return;
+            };
+            self.enter(next_id, steps + 1);
+        } else if class == "RestartNode" {
+            let _ = node.try_cast::<RestartNode>().unwrap();
+            let Some(entry_id) = self.find_entry_id() else {
+                godot_error!("DialogueController: RestartNode '{}' but conversation has no EntryNode", id);
+                self.reset();
+                return;
+            };
+            self.enter(entry_id, steps + 1);
+        } else if class == "RerouteNode" {
+            let next_id = node.try_cast::<RerouteNode>().unwrap().bind().next_id.clone();
             self.enter(next_id, steps + 1);
         } else if class == "WaitForEventNode" {
             // Clears any stale response buttons left over from before the pause.

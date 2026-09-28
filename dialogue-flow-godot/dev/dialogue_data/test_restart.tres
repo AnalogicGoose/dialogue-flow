@@ -1,0 +1,30 @@
+[gd_resource type="ConversationGraph" format=3]
+
+[sub_resource type="EntryNode" id="EntryNode_1"]
+id = "entry"
+next_id = "speech_ask"
+
+[sub_resource type="SpeechNode" id="SpeechNode_1"]
+id = "speech_ask"
+speaker = "NPC"
+text = "Ask again?"
+response_ids = Array[String](["resp_again", "resp_done"])
+
+[sub_resource type="ResponseNode" id="ResponseNode_1"]
+id = "resp_again"
+text = "Again."
+next_id = "restart"
+
+[sub_resource type="ResponseNode" id="ResponseNode_2"]
+id = "resp_done"
+text = "Done."
+next_id = "end"
+
+[sub_resource type="RestartNode" id="RestartNode_1"]
+id = "restart"
+
+[sub_resource type="EndNode" id="EndNode_1"]
+id = "end"
+
+[resource]
+nodes = Array[Resource]([SubResource("EntryNode_1"), SubResource("SpeechNode_1"), SubResource("ResponseNode_1"), SubResource("ResponseNode_2"), SubResource("RestartNode_1"), SubResource("EndNode_1")])

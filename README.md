@@ -239,7 +239,10 @@ Current project structure:
 │           ├── test_events.tres
 │           ├── test_wait_event.tres
 │           ├── test_condition.tres
-│           └── test_conditional_response.tres
+│           ├── test_conditional_response.tres
+│           ├── test_restart.tres
+│           ├── test_random.tres
+│           └── test_reroute.tres
 │
 ├── dialogue-flow-rust/
 │   ├── Cargo.lock
@@ -257,6 +260,9 @@ Current project structure:
 │       │   ├── event.rs
 │       │   ├── wait_for_event.rs
 │       │   ├── condition.rs
+│       │   ├── random.rs
+│       │   ├── restart.rs
+│       │   ├── reroute.rs
 │       │   └── graph.rs
 │       └── runtime/
 │           └── mod.rs
@@ -373,8 +379,8 @@ The roadmap is the project's source of truth and contains:
 
 ## Current Status
 
-**Phases 0-9 are complete.** The project is moving into
-**Phase 10 — Additional Flow Nodes**.
+**Phases 0-10 are complete.** The project is moving into
+**Phase 11 — Graph Validation**.
 
 Completed so far:
 
@@ -404,6 +410,7 @@ Completed so far:
 - [x] `WaitForEventNode` and `receive_event()` implemented: dialogue can pause until a matching external event arrives, ignoring unrelated events and idle calls safely
 - [x] `ConditionNode` and `set_value()`/`get_value()` implemented: conversations branch on named state that persists across `start()`/`stop()`/`cancel()`
 - [x] Conditional response visibility: a `Response` can require a state variable to be truthy to appear, with index selection kept consistent between what's displayed and what's chosen
+- [x] `RandomNode`, `RestartNode`, and `RerouteNode` implemented: weighted random branches, looping back to `Entry`, and a transparent passthrough node, all verified against the real project
 
 ---
 

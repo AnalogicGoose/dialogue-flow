@@ -1,0 +1,33 @@
+[gd_resource type="ConversationGraph" format=3]
+
+[sub_resource type="EntryNode" id="EntryNode_1"]
+id = "entry"
+next_id = "rnd"
+
+[sub_resource type="RandomBranch" id="RandomBranch_1"]
+target_id = "event_a"
+weight = 3.0
+
+[sub_resource type="RandomBranch" id="RandomBranch_2"]
+target_id = "event_b"
+weight = 1.0
+
+[sub_resource type="RandomNode" id="RandomNode_1"]
+id = "rnd"
+branches = Array[RandomBranch]([SubResource("RandomBranch_1"), SubResource("RandomBranch_2")])
+
+[sub_resource type="EventNode" id="EventNode_1"]
+id = "event_a"
+event_name = &"picked_a"
+next_id = "end"
+
+[sub_resource type="EventNode" id="EventNode_2"]
+id = "event_b"
+event_name = &"picked_b"
+next_id = "end"
+
+[sub_resource type="EndNode" id="EndNode_1"]
+id = "end"
+
+[resource]
+nodes = Array[Resource]([SubResource("EntryNode_1"), SubResource("RandomNode_1"), SubResource("EventNode_1"), SubResource("EventNode_2"), SubResource("EndNode_1")])

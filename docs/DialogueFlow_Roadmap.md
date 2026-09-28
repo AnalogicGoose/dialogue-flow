@@ -30,7 +30,7 @@
 - [x] Phase 7 — Outgoing events
 - [x] Phase 8 — Incoming events
 - [x] Phase 9 — State & conditions
-- [ ] Phase 10 — Additional flow nodes
+- [x] Phase 10 — Additional flow nodes
 - [ ] Phase 11 — Graph validation
 - [ ] Phase 12 — Visual Godot graph editor
 - [ ] Phase 13 — Editor quality of life
@@ -534,17 +534,34 @@ Only after the core graph is stable.
 
 ## Tasks
 
-- [ ] Implement `Random`.
-- [ ] Implement `Restart`.
-- [ ] Finalize explicit `End`.
-- [ ] Implement graph-cycle runtime semantics.
-- [ ] Implement `Reroute`.
+- [x] Implement `Random`. (`RandomNode` + `RandomBranch`, weighted selection via `godot::global::randf_range`)
+- [x] Implement `Restart`. (`RestartNode`; reuses the exact same entry-lookup as `start()` via a shared `find_entry_id()` helper)
+- [x] Finalize explicit `End`. No changes needed — already complete since Phase 2; still the only legal dead end now that four more automatic node types exist.
+- [x] Implement graph-cycle runtime semantics. Already covered by Phase 3's `MAX_AUTOMATIC_STEPS` guard; re-confirmed against an intentionally infinite `Reroute → Reroute` cycle (errors and resets safely, never hangs).
+- [x] Implement `Reroute`. (`RerouteNode`, pure passthrough)
 
 `Reroute` should mainly exist for editor readability.
 
+Worth recording since it came up repeatedly while testing: `Reroute` is
+*always* removable/replaceable by direct wiring with zero behavior
+change — that's not a design flaw, it's the definition of the node. It
+has no runtime purpose at all yet; its entire value is visual, for
+bending a wire around clutter once the Phase 12 graph editor exists. Any
+test built now will necessarily show "it does nothing" — the actual
+property worth verifying is that it's *transparent* (behaves identically
+to direct wiring), which was confirmed via a single-hop passthrough, a
+2-hop chain, and a 3-node infinite-loop cycle-cap test.
+
 ## Milestone
 
-- [ ] Complex graphs can loop, restart, randomly branch, and remain manageable.
+- [x] Complex graphs can loop, restart, randomly branch, and remain manageable.
+
+Verified against the real project: `test_restart.tres` loops via
+`Restart` and exits correctly; `test_random.tres`'s 3:1 weighted branches
+landed ~75/25 over 500 runs (a 0-weight branch was separately confirmed
+to never fire, across 500 runs, in scratch testing); `test_reroute.tres`
+confirms a `Reroute` participates correctly in a `Speech`-driven loop
+without being load-bearing to it.
 
 ---
 
