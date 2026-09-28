@@ -230,9 +230,12 @@ Current project structure:
 │   │       ├── dialogue-flow.gdextension
 │   │       ├── dialogue_ui.tscn
 │   │       ├── dialogue_ui.gd
+│   │       ├── bin/            (gitignored; built by `cargo build-addon`)
+│   │       │   └── linux|windows|macos/
 │   │       └── editor/
 │   │           ├── dialogue_flow_editor_plugin.gd
 │   │           ├── graph_editor.gd
+│   │           ├── dialogue_graph_edit.gd
 │   │           └── node_visuals/
 │   │               ├── node_visual.gd
 │   │               ├── entry_visual.gd
@@ -269,8 +272,12 @@ Current project structure:
 ├── dialogue-flow-rust/
 │   ├── Cargo.lock
 │   ├── Cargo.toml
+│   ├── .cargo/
+│   │   └── config.toml   (defines the `cargo build-addon` alias)
 │   └── src/
 │       ├── lib.rs
+│       ├── bin/
+│       │   └── build_addon.rs
 │       ├── graph/
 │       │   └── mod.rs
 │       ├── resources/
@@ -316,6 +323,17 @@ Contains:
 - Graph runtime
 - Validation
 - Public API
+
+During development, `dialogue-flow.gdextension` points straight at the
+addon's own `bin/` folder rather than `target/`, so run `cargo build-addon`
+(alias for `cargo run --bin build_addon --`, in `dialogue-flow-rust/`)
+instead of a plain `cargo build` — it builds the library and copies it into
+`dialogue-flow-godot/addons/dialogue_flow/bin/<platform>/`. This keeps
+`addons/dialogue_flow/` self-contained: it's what would actually get zipped
+up for the Asset Library, with no dependency on `dialogue-flow-rust/`
+existing alongside it. Defaults to a release build; `cargo build-addon debug`
+builds the debug profile instead. `bin/` is gitignored and rebuilt on demand,
+not committed on every change.
 
 ---
 

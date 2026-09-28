@@ -1,0 +1,5 @@
+[alias]
+# cargo build-addon [debug|release] -- builds the GDExtension library and
+# copies it into dialogue-flow-godot/addons/dialogue_flow/bin/, so the addon
+# is self-contained. See src/bin/build_addon.rs.
+build-addon = "run --quiet --bin build_addon --"
