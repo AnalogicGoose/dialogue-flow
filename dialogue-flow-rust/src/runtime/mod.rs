@@ -6,11 +6,12 @@
 //! module through signals and public methods (see Phase 3/4 of the roadmap).
 
 use std::collections::HashMap;
-
 use godot::classes::{Node, Resource};
 use godot::prelude::*;
 
-use crate::resources::{ConversationGraph, EndNode, EntryNode, EventNode,ResponseNode, SpeechNode};
+use crate::resources::{
+    ConversationGraph, EndNode, EntryNode, EventNode, ResponseNode, SpeechNode, WaitForEventNode
+};
 
 const MAX_AUTOMATIC_STEPS: u32 = 1000;
 
@@ -139,6 +140,33 @@ impl DialogueController {
         self.enter(response_id, 0);
     }
 
+    /// Delivers an external event. Ignored (not an error) if no dialogue
+    /// is running, the current node isn't a `WaitForEventNode`, or the
+    /// name doesn't match what it's waiting for.
+    #[func]
+    pub fn receive_event(&mut self, event_name: StringName, payload: Dictionary<GString, Variant>) {
+        let _ = payload; // accepted for symmetry with event_emitted; not yet consumed (see Phase 9)
+
+        if !self.running {
+            return;
+        }
+
+        let Some(current) = self.node_index.get(&self.current_id).cloned() else {
+            return;
+        };
+        let Ok(waiting) = current.try_cast::<WaitForEventNode>() else {
+            return;
+        };
+        let (waiting_for, next_id) = {
+            let bound = waiting.bind();
+            (bound.event_name.clone(), bound.next_id.clone())
+        };
+        if waiting_for != event_name {
+            return;
+        }
+        self.enter(next_id, 0);
+    }
+
     fn reset(&mut self) {
         self.running = false;
         self.current_id = GString::new();
@@ -211,6 +239,11 @@ impl DialogueController {
                 &[event_name.to_variant(), payload.to_variant()],
             );
             self.enter(next_id, steps + 1);
+        } else if class == "WaitForEventNode" {
+            // Clears any stale response buttons left over from before the pause.
+            self.base_mut()
+                .emit_signal("responses_changed", &[Array::<GString>::new().to_variant()]);
+            // Pauses here until receive_event() delivers a matching event.
         } else if class == "ResponseNode" {
             let next_id = node
                 .try_cast::<ResponseNode>()

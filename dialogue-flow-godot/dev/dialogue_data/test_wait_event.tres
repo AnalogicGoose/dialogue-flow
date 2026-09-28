@@ -1,0 +1,38 @@
+[gd_resource type="ConversationGraph" format=3 uid="uid://bwnfktjv71ien"]
+
+[sub_resource type="EntryNode" id="EntryNode_gogwm"]
+id = "entry"
+next_id = "speech_ask"
+
+[sub_resource type="SpeechNode" id="SpeechNode_nqn36"]
+id = "speech_ask"
+speaker = "NPC"
+text = "Open the gate."
+response_ids = Array[String](["ack"])
+
+[sub_resource type="ResponseNode" id="ResponseNode_f482d"]
+id = "ack"
+text = "Okay."
+next_id = "wait_gate"
+
+[sub_resource type="WaitForEventNode" id="WaitForEventNode_xj08a"]
+id = "wait_gate"
+event_name = &"gate_opened"
+next_id = "speech_come_in"
+
+[sub_resource type="SpeechNode" id="SpeechNode_qe88r"]
+id = "speech_come_in"
+speaker = "NPC"
+text = "Good. Come inside."
+response_ids = Array[String](["continue"])
+
+[sub_resource type="ResponseNode" id="ResponseNode_1ivvt"]
+id = "continue"
+text = "Continue..."
+next_id = "end"
+
+[sub_resource type="EndNode" id="EndNode_wqb8x"]
+id = "end"
+
+[resource]
+nodes = Array[Resource]([SubResource("EntryNode_gogwm"), SubResource("SpeechNode_nqn36"), SubResource("ResponseNode_f482d"), SubResource("WaitForEventNode_xj08a"), SubResource("SpeechNode_qe88r"), SubResource("ResponseNode_1ivvt"), SubResource("EndNode_wqb8x")])

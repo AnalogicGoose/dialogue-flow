@@ -18,3 +18,7 @@ func _on_speech_changed(speaker: String, text: String) -> void:
 func _on_responses_changed(response_texts: Array) -> void:
 	for i in response_texts.size():
 		print("%s: %s" % [i, response_texts[i]])
+
+func _unhandled_input(event: InputEvent) -> void:
+	if event is InputEventKey and event.pressed and event.keycode == KEY_G:
+		controller.receive_event("gate_opened", {})

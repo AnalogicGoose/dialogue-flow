@@ -28,7 +28,7 @@
 - [x] Phase 5 — True branching
 - [x] Phase 6 — Branch convergence
 - [x] Phase 7 — Outgoing events
-- [ ] Phase 8 — Incoming events
+- [x] Phase 8 — Incoming events
 - [ ] Phase 9 — State & conditions
 - [ ] Phase 10 — Additional flow nodes
 - [ ] Phase 11 — Graph validation
@@ -403,13 +403,13 @@ Allow external systems to influence or resume dialogue.
 
 ## Tasks
 
-- [ ] Add generic `receive_event()` API.
-- [ ] Implement `WaitForEvent`.
-- [ ] Pause traversal at `WaitForEvent`.
-- [ ] Resume when matching event arrives.
-- [ ] Ignore unrelated events safely.
-- [ ] Decide payload semantics.
-- [ ] Handle events received while no dialogue is active.
+- [x] Add generic `receive_event()` API.
+- [x] Implement `WaitForEvent`. (`WaitForEventNode`, `dialogue-flow-rust/src/resources/wait_for_event.rs`)
+- [x] Pause traversal at `WaitForEvent`.
+- [x] Resume when matching event arrives.
+- [x] Ignore unrelated events safely. (not running, wrong node, or wrong event name → silent no-op, never `godot_error!`)
+- [x] Decide payload semantics. `receive_event` accepts a `Dictionary<GString, Variant>` payload for symmetry with `event_emitted`, but it isn't consumed anywhere yet — there's no state/variable system to put it in until Phase 9.
+- [x] Handle events received while no dialogue is active. (`receive_event` on an idle controller is a no-op, verified)
 
 ## Example
 
@@ -436,7 +436,28 @@ DialogueController.receive_event("gate_opened")
 
 ## Milestone
 
-- [ ] Dialogue can both emit and receive gameplay events.
+- [x] Dialogue can both emit and receive gameplay events.
+
+Verified with `dev/dialogue_data/test_wait_event.tres` (the roadmap's own
+example graph), driven directly through `DialogueController`: pauses
+silently at `WaitForEvent`, ignores a wrong event name while waiting,
+resumes correctly on the matching event, and a fresh idle controller
+doesn't error on `receive_event()`.
+
+Fixed a real UI bug found while testing manually: entering
+`WaitForEventNode` emitted no signal at all, so `DialogueUI`'s response
+buttons from the prior `Speech` were never cleared — clicking the stale
+button then hit `choose()` on a non-`Speech` node. Fixed by emitting
+`responses_changed` with an empty array on pause, reusing the existing
+signal rather than adding a new one; `DialogueUI` needed no changes since
+it already clears buttons before rebuilding.
+
+Design note (from a user question): `WaitForEvent` only ever resumes to
+one `next_id` — it cannot branch on its own. A branch gated by "what
+happened" is meant to compose as `WaitForEvent → Condition`, where Phase
+9's state system is what actually decides the branch; `WaitForEvent`'s
+job is only "pause until *something* happens," not "decide what to do
+based on *what* happened."
 
 ---
 
