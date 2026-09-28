@@ -232,7 +232,19 @@ Current project structure:
 │   │       ├── dialogue_ui.gd
 │   │       └── editor/
 │   │           ├── dialogue_flow_editor_plugin.gd
-│   │           └── graph_editor.gd
+│   │           ├── graph_editor.gd
+│   │           └── node_visuals/
+│   │               ├── node_visual.gd
+│   │               ├── entry_visual.gd
+│   │               ├── speech_visual.gd
+│   │               ├── response_visual.gd
+│   │               ├── event_visual.gd
+│   │               ├── condition_visual.gd
+│   │               ├── random_visual.gd
+│   │               ├── wait_for_event_visual.gd
+│   │               ├── reroute_visual.gd
+│   │               ├── restart_visual.gd
+│   │               └── end_visual.gd
 │   └── dev/
 │       ├── dev_test.tscn
 │       ├── dev_test.gd

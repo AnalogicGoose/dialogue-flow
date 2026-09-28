@@ -682,22 +682,22 @@ canvas. Concretely, that means:
 - [x] Recognize dialogue graph resources. (`_handles()` matches `ConversationGraph`)
 - [x] Open them in a dedicated editor. (a main-screen tab, next to 2D/3D/Script/AssetLib — not a bottom panel, see notes below)
 - [x] Render nodes visually. (`addons/dialogue_flow/editor/graph_editor.gd`, a `GraphEdit` populated from `ConversationGraph.nodes`)
-- [x] Render connections visually. (every `*_id` edge field, via `_outgoing_ids()`)
+- [x] Render connections visually. (every `*_id` edge field, via each node type's `outgoing_ids()` — see the `node_visuals/` note below)
 - [ ] Create nodes from a context menu. (right-click-canvas fallback; drag-release-to-create, per the Design Reference above, is the primary path)
 - [ ] Delete nodes.
-- [ ] Move nodes.
+- [x] Move nodes. (`GraphElement.dragged(from, to)`)
 - [ ] Connect nodes.
 - [ ] Disconnect nodes.
 - [ ] Prevent invalid connections. (`GraphEdit.connection_request` rejects live, mid-drag — see Design Reference)
 - [ ] Edit selected node properties.
-- [ ] Persist node positions.
+- [x] Persist node positions. (a dragged node's `editor_position` is committed via `EditorUndoRedoManager`, then written to disk in `_apply_changes()` — see notes below)
 - [x] Support zoom/pan. (native `GraphEdit` behavior, no work needed)
-- [ ] Support Undo/Redo.
+- [ ] Support Undo/Redo. (node moves participate in undo/redo now, as a side effect of persistence going through `EditorUndoRedoManager` — but this task covers *every* future editing operation, not just moves, so it stays open)
 - [ ] Highlight `Entry`.
 - [ ] Visually distinguish node types. (Blueprint-style color-coding by category — see Design Reference; currently just the class name in the title)
 - [ ] Display validation errors. (`ConversationGraph::validate()` exists from Phase 11; rendered as an icon/outline on the offending node itself, per the Design Reference — not wired into the editor UI yet)
 
-**Not yet complete** — the tasks above cover read-only visualization only. Creating/editing/deleting nodes and connections, property editing, and position persistence are still ahead.
+**Not yet complete** — node/connection creation, deletion, and property editing are still ahead. Moving nodes and persisting positions are done.
 
 ### Notes from building the read-only visualizer
 
@@ -707,6 +707,8 @@ canvas. Concretely, that means:
 - **`queue_free()` is deferred** — rebuilding immediately after (e.g. switching to a different `ConversationGraph` quickly) could leave an old same-named node alive long enough that Godot auto-renamed the new one to avoid a collision, silently breaking `connect_node()` for that node. Fixed by using immediate `free()` for our own cleanup instead.
 - **A freshly-created `GraphNode` doesn't auto-shrink to its content** — `reset_size()` is needed after adding content, otherwise nodes render far larger than their actual text needs.
 - **A one-time layout bake, then the auto-layout code was deleted** (see the Design Reference section above for why: persist positions, don't auto-layout on load). A DFS assigning the longest acyclic path length from `Entry` (skipping edges back to an *ancestor* on the current path — a genuine cycle, e.g. via `Restart` — so a loop can never push itself rightward without bound, while still letting a *longer independent* path push a shared convergence point further right, with all `End` nodes forced to one shared trailing layer) was built, then run once headlessly (reusing real `GraphNode`/font sizing inside a live `SceneTree`, not guessed pixel values) against every existing test graph in `dev/dialogue_data/`, writing the computed positions into each node's `editor_position` and saving. With every graph now holding real positions, the algorithm itself was removed from `graph_editor.gd` — it now simply reads `editor_position` directly, matching the persist-positions model above. Any brand new, never-positioned node will just start at `Vector2.ZERO` until Phase 12's node-creation/move-persistence work gives it a real one.
+- **Position persistence goes through `EditorUndoRedoManager`, not an immediate save on every drag.** The first instinct (call `ResourceSaver.save()` directly inside the `dragged` signal handler) was wrong — it bypasses Godot's normal edit/save flow entirely, auto-writing to disk on every micro-movement with no undo and no relationship to Ctrl+S. The correct hook is `EditorPlugin._apply_changes()`, which Godot calls "when the editor is about to save the project, switch to another tab, etc." — i.e. it's what Ctrl+S actually triggers. So: `dragged` commits a real action via `plugin.get_undo_redo()` (`add_do_property`/`add_undo_property` on the node's `editor_position`), which marks things dirty and gives Ctrl+Z for free; `_apply_changes()` is where the actual `ResourceSaver.save()` call lives, firing only when the editor's own save flow runs it.
+- **Per-node-type editor logic moved into `node_visuals/`, one file per type, mirroring `dialogue-flow-rust/src/resources/`.** `graph_editor.gd`'s `_describe()`/`_outgoing_ids()`/`_configure_slots()` were growing `if node is X` chains that would only get worse with color-coding and labeled pins ahead. Replaced with a `NodeVisual` base (`describe()`/`outgoing_ids()`/`configure_slots()`) and one subclass per node type in `node_visuals/`, looked up by class name from a `Dictionary` in `graph_editor.gd` instead of branching. One real GDScript gotcha hit along the way: an overriding `static func` must match its parent's declared parameter *types* exactly — `static func describe(node: SpeechNode)` overriding a `describe(node: Resource)` base is a compile error, not a narrowing override; every visual file's functions are typed `Resource` like the base, with the specific fields still accessed dynamically at runtime.
 
 ## Milestone
 

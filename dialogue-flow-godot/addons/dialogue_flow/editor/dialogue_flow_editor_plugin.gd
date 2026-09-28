@@ -6,6 +6,7 @@ var current_graph: ConversationGraph
 
 func _enter_tree():
 	graph_editor = preload("res://addons/dialogue_flow/editor/graph_editor.gd").new()
+	graph_editor.plugin = self
 	graph_editor.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	graph_editor.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	graph_editor.custom_minimum_size = Vector2(0, 400)
@@ -15,6 +16,16 @@ func _enter_tree():
 func _exit_tree():
 	if graph_editor:
 		graph_editor.queue_free()
+
+# Called by Godot on Ctrl+S (and tab-switch, editor-close) -- this is
+# where pending in-memory changes (e.g. a dragged node's editor_position,
+# committed via EditorUndoRedoManager) actually get written to disk.
+func _apply_changes() -> void:
+	if current_graph == null:
+		return
+	var err := ResourceSaver.save(current_graph, current_graph.resource_path)
+	if err != OK:
+		push_error("DialogueFlow: failed to save (%s)" % err)
 
 func _has_main_screen() -> bool:
 	return true
