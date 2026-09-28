@@ -233,16 +233,21 @@ Current project structure:
 │       ├── dev_test.tscn
 │       ├── dev_test.gd
 │       └── dialogue_data/
-│           ├── test_conversation.tres
-│           ├── test_branching.tres
-│           ├── test_convergence.tres
-│           ├── test_events.tres
-│           ├── test_wait_event.tres
-│           ├── test_condition.tres
-│           ├── test_conditional_response.tres
-│           ├── test_restart.tres
-│           ├── test_random.tres
-│           └── test_reroute.tres
+│           ├── basics/
+│           │   └── test_conversation.tres
+│           ├── branching/
+│           │   ├── test_branching.tres
+│           │   └── test_convergence.tres
+│           ├── events/
+│           │   ├── test_events.tres
+│           │   └── test_wait_event.tres
+│           ├── state/
+│           │   ├── test_condition.tres
+│           │   └── test_conditional_response.tres
+│           └── flow/
+│               ├── test_restart.tres
+│               ├── test_random.tres
+│               └── test_reroute.tres
 │
 ├── dialogue-flow-rust/
 │   ├── Cargo.lock
