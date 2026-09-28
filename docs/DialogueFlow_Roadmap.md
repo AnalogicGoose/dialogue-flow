@@ -638,6 +638,44 @@ GraphNode
 
 Rust remains responsible for data/runtime. GDScript may be used for editor integration where appropriate.
 
+## Design Reference: Unreal Blueprint
+
+The target UX is Unreal's Blueprint graph editor, not a generic node
+canvas. Concretely, that means:
+
+- **Drag-release node creation.** Dragging a wire out from a pin and
+  releasing it over empty canvas opens a searchable menu of compatible
+  node types; picking one creates the node already wired to where the
+  drag started. This is the primary way nodes get created — a plain
+  right-click-canvas menu (already listed below) is the fallback, not
+  the main path.
+- **Manual cleanup actions, not automatic layout** (already the decision
+  behind [retiring the DFS auto-layout](#notes-from-building-the-read-only-visualizer)):
+  "Straighten Connections" on a wire or selection, plus
+  Align Top/Middle/Bottom/Left/Center/Right and Distribute
+  Horizontally/Vertically on a multi-selection — targeted, user-invoked,
+  never something that runs on load.
+- **Double-click a wire to insert a `Reroute`** at that point, already
+  connected on both sides — this is `Reroute`'s actual authoring path,
+  not manually placing one and rewiring two edges by hand.
+- **Validation surfaces on the graph itself, not just a console.**
+  `ConversationGraph::validate()` (Phase 11) already returns structured
+  errors/warnings per node — Phase 12's "Display validation errors" task
+  means rendering those as an error/warning icon or outline directly on
+  the offending `GraphNode`, matching Blueprint's compile-error markers,
+  not a separate log panel the author has to cross-reference by id.
+- **Connections rejected live while dragging, not after.**
+  `GraphEdit.connection_request` lets us check the
+  connection-legality rule (no edge may target `Entry`/`Response`) and
+  simply refuse to complete an illegal drag, the same way Blueprint
+  greys out/refuses incompatible pins mid-drag — not connect-then-error.
+- **Color-coded nodes by category**, the same way Blueprint colors events
+  red, flow control grey, pure functions blue/teal: each of our node
+  types should get a consistent color so the graph is scannable at a
+  glance (exact palette TBD when this is built).
+- **`Condition`'s two outputs behave like Blueprint's Branch node** —
+  labeled/colored `True`/`False` pins, not two identical anonymous slots.
+
 ## Tasks
 
 - [x] Create custom `EditorPlugin`. (`addons/dialogue_flow/editor/dialogue_flow_editor_plugin.gd`)
@@ -645,19 +683,19 @@ Rust remains responsible for data/runtime. GDScript may be used for editor integ
 - [x] Open them in a dedicated editor. (a main-screen tab, next to 2D/3D/Script/AssetLib — not a bottom panel, see notes below)
 - [x] Render nodes visually. (`addons/dialogue_flow/editor/graph_editor.gd`, a `GraphEdit` populated from `ConversationGraph.nodes`)
 - [x] Render connections visually. (every `*_id` edge field, via `_outgoing_ids()`)
-- [ ] Create nodes from a context menu.
+- [ ] Create nodes from a context menu. (right-click-canvas fallback; drag-release-to-create, per the Design Reference above, is the primary path)
 - [ ] Delete nodes.
 - [ ] Move nodes.
 - [ ] Connect nodes.
 - [ ] Disconnect nodes.
-- [ ] Prevent invalid connections.
+- [ ] Prevent invalid connections. (`GraphEdit.connection_request` rejects live, mid-drag — see Design Reference)
 - [ ] Edit selected node properties.
 - [ ] Persist node positions.
 - [x] Support zoom/pan. (native `GraphEdit` behavior, no work needed)
 - [ ] Support Undo/Redo.
 - [ ] Highlight `Entry`.
-- [ ] Visually distinguish node types. (currently: title shows the class name, but no color-coding yet)
-- [ ] Display validation errors. (`ConversationGraph::validate()` exists from Phase 11; not wired into the editor UI yet)
+- [ ] Visually distinguish node types. (Blueprint-style color-coding by category — see Design Reference; currently just the class name in the title)
+- [ ] Display validation errors. (`ConversationGraph::validate()` exists from Phase 11; rendered as an icon/outline on the offending node itself, per the Design Reference — not wired into the editor UI yet)
 
 **Not yet complete** — the tasks above cover read-only visualization only. Creating/editing/deleting nodes and connections, property editing, and position persistence are still ahead.
 
@@ -668,8 +706,7 @@ Rust remains responsible for data/runtime. GDScript may be used for editor integ
 - **`GraphEdit.get_children()` includes GraphEdit's own internal nodes** (its `connections_layer`, etc.), not just the `GraphNode`s we add — blindly `queue_free()`-ing every child on rebuild destroyed GraphEdit's own internals ("connections_layer is missing" errors on every redraw). Fixed by filtering to `if child is GraphNode`.
 - **`queue_free()` is deferred** — rebuilding immediately after (e.g. switching to a different `ConversationGraph` quickly) could leave an old same-named node alive long enough that Godot auto-renamed the new one to avoid a collision, silently breaking `connect_node()` for that node. Fixed by using immediate `free()` for our own cleanup instead.
 - **A freshly-created `GraphNode` doesn't auto-shrink to its content** — `reset_size()` is needed after adding content, otherwise nodes render far larger than their actual text needs.
-- **Design decision (informed by how Unreal's Blueprint editor works, since UEFN's own exact behavior isn't something we have verified specifics on):** most node-graph editors don't auto-layout on every load — they persist last-dragged positions and treat "arrange" as a manual, user-triggered action (Unreal even has a targeted "Straighten Connections" action, not just a global re-layout). We're following that model rather than trying to perfect automatic layout for every topology (e.g. multiple disconnected islands, which a `Reroute`-heavy or mid-edit graph can easily produce).
-- **A one-time layout bake, then the auto-layout code was deleted.** A DFS assigning the longest acyclic path length from `Entry` (skipping edges back to an *ancestor* on the current path — a genuine cycle, e.g. via `Restart` — so a loop can never push itself rightward without bound, while still letting a *longer independent* path push a shared convergence point further right, with all `End` nodes forced to one shared trailing layer) was built, then run once headlessly (reusing real `GraphNode`/font sizing inside a live `SceneTree`, not guessed pixel values) against every existing test graph in `dev/dialogue_data/`, writing the computed positions into each node's `editor_position` and saving. With every graph now holding real positions, the algorithm itself was removed from `graph_editor.gd` — it now simply reads `editor_position` directly, matching the persist-positions model above. Any brand new, never-positioned node will just start at `Vector2.ZERO` until Phase 12's node-creation/move-persistence work gives it a real one.
+- **A one-time layout bake, then the auto-layout code was deleted** (see the Design Reference section above for why: persist positions, don't auto-layout on load). A DFS assigning the longest acyclic path length from `Entry` (skipping edges back to an *ancestor* on the current path — a genuine cycle, e.g. via `Restart` — so a loop can never push itself rightward without bound, while still letting a *longer independent* path push a shared convergence point further right, with all `End` nodes forced to one shared trailing layer) was built, then run once headlessly (reusing real `GraphNode`/font sizing inside a live `SceneTree`, not guessed pixel values) against every existing test graph in `dev/dialogue_data/`, writing the computed positions into each node's `editor_position` and saving. With every graph now holding real positions, the algorithm itself was removed from `graph_editor.gd` — it now simply reads `editor_position` directly, matching the persist-positions model above. Any brand new, never-positioned node will just start at `Vector2.ZERO` until Phase 12's node-creation/move-persistence work gives it a real one.
 
 ## Milestone
 
@@ -683,8 +720,8 @@ Not reached yet — still read-only.
 
 ## Tasks
 
-- [ ] Node search/create menu.
-- [ ] Duplicate nodes.
+- [ ] Node search/create menu. (the drag-release-from-a-pin search menu from Phase 12's Design Reference; a plain right-click version is the Phase 12 fallback)
+- [ ] Duplicate nodes. (Ctrl+D/Ctrl+W, Blueprint-style)
 - [ ] Copy/paste.
 - [ ] Multi-select.
 - [ ] Delete selected graph region.
@@ -694,11 +731,13 @@ Not reached yet — still read-only.
 - [ ] Jump to node by ID.
 - [ ] Highlight invalid nodes.
 - [ ] Highlight unreachable nodes.
-- [ ] Reroute nodes.
-- [ ] Optional comments/groups.
+- [ ] Reroute nodes. (double-click a wire to insert one, already connected on both sides — see Phase 12's Design Reference)
+- [ ] Optional comments/groups. (Blueprint-style resizable, labeled comment boxes around a selection)
 - [ ] Confirmation for destructive actions.
 - [ ] Sensible default node sizes.
 - [ ] Useful tooltips/documentation.
+- [ ] Straighten Connections action. (align connected nodes so a wire — or every wire in a selection — becomes a straight horizontal line; see Phase 12's Design Reference)
+- [ ] Align/Distribute selected nodes. (Top/Middle/Bottom/Left/Center/Right align, horizontal/vertical distribute — see Phase 12's Design Reference)
 
 ## Milestone
 
