@@ -32,7 +32,7 @@
 - [x] Phase 9 — State & conditions
 - [x] Phase 10 — Additional flow nodes
 - [x] Phase 11 — Graph validation
-- [ ] Phase 12 — Visual Godot graph editor
+- [x] Phase 12 — Visual Godot graph editor
 - [ ] Phase 13 — Editor quality of life
 - [ ] Phase 14 — External/public API
 - [ ] Phase 15 — Reusability test suite
@@ -683,21 +683,21 @@ canvas. Concretely, that means:
 - [x] Open them in a dedicated editor. (a main-screen tab, next to 2D/3D/Script/AssetLib — not a bottom panel, see notes below)
 - [x] Render nodes visually. (`addons/dialogue_flow/editor/graph_editor.gd`, a `GraphEdit` populated from `ConversationGraph.nodes`)
 - [x] Render connections visually. (every `*_id` edge field, via each node type's `outgoing_ids()` — see the `node_visuals/` note below)
-- [ ] Create nodes from a context menu. (right-click-canvas fallback; drag-release-to-create, per the Design Reference above, is the primary path)
-- [ ] Delete nodes.
+- [x] Create nodes from a context menu. (right-click-canvas AND drag-release-from-a-pin both open the same searchable, arrow-key-navigable popup, filtered to compatible types when opened from a pin — see notes below)
+- [x] Delete nodes. (`GraphEdit.delete_nodes_request`)
 - [x] Move nodes. (`GraphElement.dragged(from, to)`)
-- [ ] Connect nodes.
-- [ ] Disconnect nodes.
-- [ ] Prevent invalid connections. (`GraphEdit.connection_request` rejects live, mid-drag — see Design Reference)
-- [ ] Edit selected node properties.
+- [x] Connect nodes. (drag-to-connect; a brand new target/source node from a pin-drag is created and connected in one step)
+- [x] Disconnect nodes. (`GraphEdit.disconnection_request`)
+- [x] Prevent invalid connections. (`GraphEdit.connection_request` + `DialogueGraphEdit._is_node_hover_valid()` reject live, mid-drag — see Design Reference and notes below)
+- [x] Edit selected node properties. (`node_selected` → `EditorInterface.edit_resource(node)`, reuses the native Inspector rather than building a custom property UI)
 - [x] Persist node positions. (a dragged node's `editor_position` is committed via `EditorUndoRedoManager`, then written to disk in `_apply_changes()` — see notes below)
 - [x] Support zoom/pan. (native `GraphEdit` behavior, no work needed)
-- [ ] Support Undo/Redo. (node moves participate in undo/redo now, as a side effect of persistence going through `EditorUndoRedoManager` — but this task covers *every* future editing operation, not just moves, so it stays open)
-- [ ] Highlight `Entry`.
-- [ ] Visually distinguish node types. (Blueprint-style color-coding by category — see Design Reference; currently just the class name in the title)
-- [ ] Display validation errors. (`ConversationGraph::validate()` exists from Phase 11; rendered as an icon/outline on the offending node itself, per the Design Reference — not wired into the editor UI yet)
+- [x] Support Undo/Redo. (every structural edit — move, create, delete, connect, disconnect — commits through one atomic helper, so all of them are uniformly Ctrl+Z/Ctrl+Y-able, not just moves)
+- [x] Highlight `Entry`. (title prefixed with `▶`)
+- [x] Visually distinguish node types. (Blueprint-style color-coded titlebars, one color per type via each `node_visuals/*.gd`'s `color()`)
+- [x] Display validation errors. (`ConversationGraph::validate()`'s messages are matched to nodes by id and shown as an error/warning count on the node, full text in its tooltip)
 
-**Not yet complete** — node/connection creation, deletion, and property editing are still ahead. Moving nodes and persisting positions are done.
+**Complete**, with one known, deliberately scoped gap: `Condition`/`RandomNode` still render a single generic output slot, so drag-connect is rejected for them (`can_connect_to` returns `false`) and `true_id`/`false_id`/`branches` stay Inspector-edited — the Design Reference's labeled/colored `True`/`False` pins need a multi-row `GraphNode` body, which wasn't built. Both nodes' outgoing edges still render correctly regardless of how they were set. Node/connection creation, deletion, and property editing are otherwise all in place.
 
 ### Notes from building the read-only visualizer
 
@@ -710,11 +710,21 @@ canvas. Concretely, that means:
 - **Position persistence goes through `EditorUndoRedoManager`, not an immediate save on every drag.** The first instinct (call `ResourceSaver.save()` directly inside the `dragged` signal handler) was wrong — it bypasses Godot's normal edit/save flow entirely, auto-writing to disk on every micro-movement with no undo and no relationship to Ctrl+S. The correct hook is `EditorPlugin._apply_changes()`, which Godot calls "when the editor is about to save the project, switch to another tab, etc." — i.e. it's what Ctrl+S actually triggers. So: `dragged` commits a real action via `plugin.get_undo_redo()` (`add_do_property`/`add_undo_property` on the node's `editor_position`), which marks things dirty and gives Ctrl+Z for free; `_apply_changes()` is where the actual `ResourceSaver.save()` call lives, firing only when the editor's own save flow runs it.
 - **Per-node-type editor logic moved into `node_visuals/`, one file per type, mirroring `dialogue-flow-rust/src/resources/`.** `graph_editor.gd`'s `_describe()`/`_outgoing_ids()`/`_configure_slots()` were growing `if node is X` chains that would only get worse with color-coding and labeled pins ahead. Replaced with a `NodeVisual` base (`describe()`/`outgoing_ids()`/`configure_slots()`) and one subclass per node type in `node_visuals/`, looked up by class name from a `Dictionary` in `graph_editor.gd` instead of branching. One real GDScript gotcha hit along the way: an overriding `static func` must match its parent's declared parameter *types* exactly — `static func describe(node: SpeechNode)` overriding a `describe(node: Resource)` base is a compile error, not a narrowing override; every visual file's functions are typed `Resource` like the base, with the specific fields still accessed dynamically at runtime.
 
+### Notes from building interactive editing
+
+- **Connection legality is data, not `graph_editor.gd` branching.** Each `node_visuals/*.gd` exposes `can_connect_to(node, target)`, `connection_patch(node, target)` / `disconnection_patch(node, target_id)` (returning `{property, value}` for the field to change, or `{}` for "not applicable"), and `can_be_source()`. `graph_editor.gd` just calls these — it doesn't know that `SpeechNode` branches between `response_ids` (append) vs `fallback_id` depending on the target type, or that `Condition`/`Random` reject drag-connect. This mirrors the same `node_visuals/` split from the read-only phase.
+- **Pin-drag-to-empty-space reuses the same search popup as right-click**, via `GraphEdit.connection_to_empty`/`connection_from_empty`, filtered to types `can_connect_to`-compatible with the dragged pin (and, for a drag started at an *input* pin, filtered further by `can_be_source()` — a new node needs an output at all to feed into it). Picking a type creates the node and wires the connection as one undo step.
+- **Live invalid-connection rejection needs a `GraphEdit` subclass, not a signal** — `_is_node_hover_valid()` is a virtual method GraphEdit calls while a connection drag is in progress, not something `connect()` can hook. `dialogue_graph_edit.gd` is a small subclass just for this, delegating back to `graph_editor.gd`'s `is_connection_valid()`.
+- **Every structural edit funnels through one atomic do/undo helper** (`_commit_multi_change` / `_apply_entries_and_rebuild` in `graph_editor.gd`) rather than one `add_do_property`/`add_do_method` pair per field. With several `add_do_*`/`add_undo_*` entries in one `EditorUndoRedoManager` action, the order they actually run in on undo isn't documented well enough to bet a correct rebuild on — so each side (do/undo) is a single method call that applies every `[object, property, value]` entry and rebuilds once, sidestepping the ordering question entirely.
+- **That rebuild has to be deferred.** It immediately `free()`s old `GraphNode`s (see the read-only-phase notes above on why immediate over `queue_free()`), but it often runs synchronously from inside a signal that `GraphEdit` or the dragged `GraphNode` itself is still emitting (`dragged`, `connection_to_empty`) — Godot refuses to free a node while it (or an ancestor) is mid-signal-dispatch ("Object is locked and can't be freed"). `call_deferred("_rebuild")` runs it after that call stack unwinds; the actual data mutation stays synchronous, only the visual rebuild is delayed a frame.
+- **A `Label` added as a child of `GraphEdit` inherits its pan/zoom transform** — an "empty state" placeholder needs to stay docked to the viewport regardless of scroll/zoom, so it has to live in a plain sibling `Control` overlaying `GraphEdit`, not inside it.
+- **`_ready()` needs to call `_rebuild()` once itself.** Without it, `current_graph` and the empty-state label's text both stay at their just-constructed defaults (`null` / `""`) until the first `load_graph()`/close — meaning the "no graph open" placeholder was invisible (empty text, not just hidden) on a fresh plugin load, only ever appearing after a graph had been opened and closed at least once.
+
 ## Milestone
 
-- [ ] A conversation can be created from scratch without manually editing raw resources.
+- [x] A conversation can be created from scratch without manually editing raw resources.
 
-Not reached yet — still read-only.
+Reached — New Graph, node creation (search popup), drag-to-connect, Inspector-based property editing, and Save cover the full authoring loop now.
 
 ---
 
@@ -722,7 +732,7 @@ Not reached yet — still read-only.
 
 ## Tasks
 
-- [ ] Node search/create menu. (the drag-release-from-a-pin search menu from Phase 12's Design Reference; a plain right-click version is the Phase 12 fallback)
+- [x] Node search/create menu. (built in Phase 12 — right-click and drag-release-from-a-pin both open the same searchable, arrow-key-navigable popup)
 - [ ] Duplicate nodes. (Ctrl+D/Ctrl+W, Blueprint-style)
 - [ ] Copy/paste.
 - [ ] Multi-select.

@@ -356,6 +356,44 @@ godot = { version = "0.5.5", features = ["register-docs"] }
 
 ---
 
+## Getting Started
+
+To run this repo locally (as opposed to just reading it):
+
+1. **Build the GDExtension.** From `dialogue-flow-rust/`:
+
+   ```sh
+   cargo build-addon
+   ```
+
+   This compiles the Rust crate and copies the resulting library into
+   `dialogue-flow-godot/addons/dialogue_flow/bin/<platform>/`, which is
+   where the addon's `.gdextension` file expects to find it — a plain
+   `cargo build` compiles the crate but leaves the binary in `target/`,
+   where Godot won't see it. Pass `debug` for a debug build
+   (`cargo build-addon debug`); the default is `release`. See
+   `dialogue-flow-rust/src/bin/build_addon.rs` for what it's actually doing.
+
+2. **Open the Godot project.** Point Godot 4 at
+   `dialogue-flow-godot/project.godot`. The `DialogueFlow` editor plugin is
+   already enabled in `project.godot`, so no manual "enable plugin" step
+   is needed — after step 1, its main-screen tab and the `EntryNode`/
+   `SpeechNode`/etc. resource types should just work.
+
+3. **Try it.** `dev/dialogue_data/` has test `ConversationGraph` resources
+   grouped by topic (`basics/`, `branching/`, `events/`, `state/`,
+   `flow/`) — double-click one in the FileSystem dock to open it in the
+   visual editor. `dev/dev_test.tscn` is a runnable scene wired to
+   `test_reroute.tres` through the generic `DialogueUI`, for playing a
+   conversation end-to-end rather than just editing its graph.
+
+If you change the Rust code, re-run `cargo build-addon` and reload the
+project (or use Godot's "Reload current project") to pick up the new
+binary — the `.gdextension` config has `reloadable = true`, but a change
+to the compiled library itself still needs a fresh build first.
+
+---
+
 ## Development Principles
 
 ### Editor-first content
@@ -419,8 +457,8 @@ The roadmap is the project's source of truth and contains:
 
 ## Current Status
 
-**Phases 0-11 are complete.** The project is moving into
-**Phase 12 — Visual Godot Graph Editor**.
+**Phases 0-12 are complete.** The project is moving into
+**Phase 13 — Editor Quality of Life**.
 
 Completed so far:
 
@@ -452,8 +490,8 @@ Completed so far:
 - [x] Conditional response visibility: a `Response` can require a state variable to be truthy to appear, with index selection kept consistent between what's displayed and what's chosen
 - [x] `RandomNode`, `RestartNode`, and `RerouteNode` implemented: weighted random branches, looping back to `Entry`, and a transparent passthrough node, all verified against the real project
 - [x] `ConversationGraph::validate()` implemented: static checks for missing/duplicate `Entry`, dangling/illegal edges, invalid response targets, unreachable nodes, and cycles with no pausing node — caught a real, previously-undetected bug in existing test content
-
-**In progress (Phase 12):** a custom `EditorPlugin` (`addons/dialogue_flow/editor/`) renders any `ConversationGraph` as a read-only graph on its own main-screen tab, reading each node's saved `editor_position` directly. Every existing test graph in `dev/dialogue_data/` had real positions baked in with a one-time headless layout pass; creating/editing/deleting nodes and connections, property editing, and real move-persistence for new work are still ahead — see the roadmap for details and the bugs found along the way.
+- [x] Custom `EditorPlugin` (`addons/dialogue_flow/editor/`) implemented: `ConversationGraph` resources open on their own main-screen tab as an editable `GraphEdit` — create/delete/connect/disconnect nodes (right-click or drag-release-from-a-pin, with a searchable node-type popup and live invalid-connection rejection), move nodes, edit properties via the native Inspector, color-coded by node type, `Entry` highlighted, validation errors shown per node, New/Open/Save/Close toolbar, all changes Ctrl+Z/Ctrl+S-integrated through `EditorUndoRedoManager`
+- [x] `addons/dialogue_flow/` made self-contained for distribution: the `.gdextension` loads from `addons/dialogue_flow/bin/<platform>/` rather than the sibling Rust crate's `target/`; `cargo build-addon` (in `dialogue-flow-rust/`) builds and copies the library there
 
 ---
 
