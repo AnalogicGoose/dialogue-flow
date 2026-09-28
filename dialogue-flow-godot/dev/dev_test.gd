@@ -3,6 +3,10 @@ extends Node2D
 @onready var controller: DialogueController = $DialogueController
 
 func _ready() -> void:
+	var result = controller.conversation.validate()
+	print("Errors: ", result["errors"])
+	print("Warnings: ", result["warnings"])
+	
 	controller.dialogue_started.connect(func(): print("-- dialogue_started --"))
 	controller.dialogue_finished.connect(func(): print("-- dialogue_finished --"))
 	controller.dialogue_cancelled.connect(func(): print("-- dialogue_cancelled --"))
