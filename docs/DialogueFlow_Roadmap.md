@@ -827,8 +827,8 @@ have.
 - [x] Duplicate nodes. (Ctrl+D/Ctrl+W, Blueprint-style; `NodeVisual.remap_ids()` — one override per node type — rewrites each duplicate's own edge fields via an old-id→new-id map, clearing anything that pointed outside the duplicated selection rather than leaving it dangling or silently reconnected to the original graph; duplicates get a freshly generated `id` via `_generate_unique_id()`, per the Pre-v1 Architecture Stress Test's fresh-id-on-duplicate finding, and are left selected afterward)
 - [x] Copy/paste. (Ctrl+C/Ctrl+V; shares `_clone_and_commit()` with duplication — copy snapshots selected nodes via `duplicate(true)` into an in-memory clipboard buffer at copy time, decoupled from later edits to the originals; paste re-clones that buffer fresh each time, so pasting repeatedly never shares sub-resources across pastes, and drops the group at the mouse position, keeping the copied nodes' relative layout by re-centering on their original centroid)
 - [ ] In-editor conversation preview/playtest. (not originally on this list — added after the Pre-v1 Architecture Stress Test above; cheap given `DialogueController` is already signal-driven and decoupled from `DialogueUI`)
-- [ ] Multi-select.
-- [ ] Delete selected graph region.
+- [x] Multi-select. (native `GraphEdit` behavior — ctrl/shift-click and rubber-band select all work with no extra code, same as Phase 12's zoom/pan; confirmed working correctly with group duplicate and group copy/paste)
+- [ ] Delete selected graph region. (likely already covered by the `delete_nodes_request` wiring from Phase 12, which already receives every currently-selected node's name — worth a quick confirmation pass rather than new work)
 - [ ] Automatic unique IDs.
 - [ ] Search/rename speakers.
 - [ ] Search dialogue text.
