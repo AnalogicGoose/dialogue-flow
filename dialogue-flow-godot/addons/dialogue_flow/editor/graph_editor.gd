@@ -59,6 +59,7 @@ var filtered_node_types: Array[int] = []
 # connection, and the list is filtered to types compatible with this pin.
 var pending_pin_node: Resource = null
 var pending_pin_reverse: bool = false
+var pending_pin_port: int = 0
 
 func _ready():
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
@@ -216,7 +217,42 @@ func _rebuild():
 			tooltip_lines.append_array(status["warnings"])
 			gnode.tooltip_text = "\n".join(tooltip_lines)
 
-		visual.configure_slots(gnode, node)
+		# One row per logical outgoing connection (Unreal Blueprint /
+		# Orchestrator style), instead of every connection sharing slot 0's
+		# single pin. Row 0 (the description label above) keeps its output
+		# only when there's just one row total; otherwise it becomes
+		# input-only and every row here gets its own dedicated, port-numbered
+		# output slot. See the roadmap's "Planned: Graph Node Visual System
+		# Refactor" section for the full design writeup.
+		var rows: Array[Dictionary] = visual.output_rows(node)
+		visual.configure_slots(gnode, node, rows.size())
+
+		if rows.size() > 1:
+			for i in rows.size():
+				var row_data: Dictionary = rows[i]
+				var row_box := HBoxContainer.new()
+				var row_label := Label.new()
+				row_label.text = row_data.get("label", "")
+				row_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+				row_box.add_child(row_label)
+				if row_data.get("removable", false):
+					var remove_button := Button.new()
+					remove_button.icon = EditorInterface.get_editor_theme().get_icon("Remove", "EditorIcons")
+					remove_button.flat = true
+					remove_button.tooltip_text = "Remove this pin"
+					remove_button.pressed.connect(_on_remove_pin_pressed.bind(node, i))
+					row_box.add_child(remove_button)
+				gnode.add_child(row_box)
+				gnode.set_slot(gnode.get_child_count() - 1, false, 0, Color.WHITE, true, 0, Color.WHITE)
+
+		if visual.supports_dynamic_pins():
+			var add_button := Button.new()
+			add_button.icon = EditorInterface.get_editor_theme().get_icon("Add", "EditorIcons")
+			add_button.text = "Add Pin"
+			add_button.flat = true
+			add_button.pressed.connect(_on_add_pin_pressed.bind(node))
+			gnode.add_child(add_button)
+
 		graph_edit.add_child(gnode)
 		gnode.reset_size()
 		gnode.dragged.connect(_on_node_dragged.bind(node))
@@ -225,9 +261,11 @@ func _rebuild():
 			node.changed.connect(_on_node_resource_changed)
 
 	for node in current_graph.nodes:
-		for target_id in _visual_for(node).outgoing_ids(node):
+		var rows: Array[Dictionary] = _visual_for(node).output_rows(node)
+		for i in rows.size():
+			var target_id: String = rows[i]["target_id"]
 			if target_id != "" and node_by_id.has(target_id):
-				graph_edit.connect_node(node.id, 0, target_id, 0)
+				graph_edit.connect_node(node.id, i, target_id, 0)
 
 	if not pending_selection_ids.is_empty():
 		for gnode in graph_edit.get_children():
@@ -247,12 +285,12 @@ func _validation_status_for(node_id: String, validation: Dictionary) -> Dictiona
 			warnings.append(String(w))
 	return {"errors": errors, "warnings": warnings}
 
-func is_connection_valid(from_node: StringName, to_node: StringName) -> bool:
+func is_connection_valid(from_node: StringName, from_port: int, to_node: StringName, to_port: int) -> bool:
 	var source: Resource = node_by_id.get(String(from_node))
 	var target: Resource = node_by_id.get(String(to_node))
 	if source == null or target == null:
 		return false
-	return _visual_for(source).can_connect_to(source, target)
+	return _visual_for(source).can_connect_to(source, target, from_port)
 
 func _on_node_dragged(from: Vector2, to: Vector2, node: Resource) -> void:
 	_commit_property_change("Move %s" % node.id, node, "editor_position", to)
@@ -286,7 +324,7 @@ func _on_nodes_button_pressed() -> void:
 # Dragging a wire from an OUTPUT pin and releasing over empty canvas: the
 # dragged-from node becomes the source, the picked type becomes a brand new
 # target node, created and connected in one step.
-func _on_connection_to_empty(from_node: StringName, _from_port: int, _release_position: Vector2) -> void:
+func _on_connection_to_empty(from_node: StringName, from_port: int, _release_position: Vector2) -> void:
 	if current_graph == null:
 		return
 	var source: Resource = node_by_id.get(String(from_node))
@@ -294,7 +332,7 @@ func _on_connection_to_empty(from_node: StringName, _from_port: int, _release_po
 		return
 	var screen_pos := DisplayServer.mouse_get_position()
 	var graph_pos := _graph_local_to_position_offset(graph_edit.get_local_mouse_position())
-	_open_create_popup(screen_pos, graph_pos, source, false)
+	_open_create_popup(screen_pos, graph_pos, source, false, from_port)
 
 # Dragging a wire from an INPUT pin and releasing over empty canvas: the
 # dragged-from node becomes the target, the picked type becomes a brand new
@@ -317,10 +355,11 @@ func _on_connection_from_empty(to_node: StringName, _to_port: int, _release_posi
 func _graph_local_to_position_offset(local_pos: Vector2) -> Vector2:
 	return (local_pos + graph_edit.scroll_offset) / graph_edit.zoom
 
-func _open_create_popup(screen_position: Vector2, graph_position: Vector2, pin_node: Resource = null, pin_reverse: bool = false) -> void:
+func _open_create_popup(screen_position: Vector2, graph_position: Vector2, pin_node: Resource = null, pin_reverse: bool = false, pin_port: int = 0) -> void:
 	pending_create_position = graph_position
 	pending_pin_node = pin_node
 	pending_pin_reverse = pin_reverse
+	pending_pin_port = pin_port
 	create_search.text = ""
 	_refresh_create_list("")
 	create_popup.position = screen_position
@@ -353,7 +392,7 @@ func _type_compatible_with_pin(type_index: int) -> bool:
 	var probe: Resource = ClassDB.instantiate(type_info["class"])
 	if pending_pin_reverse:
 		return visual.can_be_source() and visual.can_connect_to(probe, pending_pin_node)
-	return _visual_for(pending_pin_node).can_connect_to(pending_pin_node, probe)
+	return _visual_for(pending_pin_node).can_connect_to(pending_pin_node, probe, pending_pin_port)
 
 func _on_create_search_changed(text: String) -> void:
 	_refresh_create_list(text)
@@ -395,7 +434,7 @@ func _confirm_create_selection() -> void:
 	var type_index: int = filtered_node_types[list_index]
 	create_popup.hide()
 	if pending_pin_node != null:
-		_create_and_connect(type_index, pending_create_position, pending_pin_node, pending_pin_reverse)
+		_create_and_connect(type_index, pending_create_position, pending_pin_node, pending_pin_reverse, pending_pin_port)
 		pending_pin_node = null
 	else:
 		_create_node(type_index, pending_create_position)
@@ -414,7 +453,7 @@ func _create_node(type_index: int, at_position: Vector2) -> void:
 # Creates the picked node AND wires it to the node the drag started from, as
 # one undoable step. `reverse` decides which end pending_pin_node fills --
 # see _type_compatible_with_pin for the same source/target reasoning.
-func _create_and_connect(type_index: int, at_position: Vector2, pinned_node: Resource, reverse: bool) -> void:
+func _create_and_connect(type_index: int, at_position: Vector2, pinned_node: Resource, reverse: bool, pin_port: int) -> void:
 	if current_graph == null:
 		return
 	var type_info: Dictionary = NODE_TYPES[type_index]
@@ -424,7 +463,11 @@ func _create_and_connect(type_index: int, at_position: Vector2, pinned_node: Res
 
 	var source: Resource = new_node if reverse else pinned_node
 	var target: Resource = pinned_node if reverse else new_node
-	var patch: Dictionary = _visual_for(source).connection_patch(source, target)
+	# reverse: the new node is the source, always at its own port 0 (its
+	# first connection). Otherwise the drag started at pinned_node's own
+	# pin_port, which is what decides which of its rows gets wired.
+	var source_port: int = 0 if reverse else pin_port
+	var patch: Dictionary = _visual_for(source).connection_patch(source, target, source_port)
 
 	var new_nodes: Array[Resource] = current_graph.nodes.duplicate()
 	new_nodes.append(new_node)
@@ -539,10 +582,10 @@ func _on_connection_request(from_node: StringName, from_port: int, to_node: Stri
 	if source == null or target == null:
 		return
 	var visual := _visual_for(source)
-	if not visual.can_connect_to(source, target):
+	if not visual.can_connect_to(source, target, from_port):
 		push_warning("DialogueFlow: '%s' cannot connect to '%s' this way yet -- use the Inspector" % [from_node, to_node])
 		return
-	var patch: Dictionary = visual.connection_patch(source, target)
+	var patch: Dictionary = visual.connection_patch(source, target, from_port)
 	if patch.is_empty():
 		return
 	_commit_property_change("Connect %s -> %s" % [from_node, to_node], source, patch["property"], patch["value"])
@@ -551,10 +594,22 @@ func _on_disconnection_request(from_node: StringName, from_port: int, to_node: S
 	var source: Resource = node_by_id.get(String(from_node))
 	if source == null:
 		return
-	var patch: Dictionary = _visual_for(source).disconnection_patch(source, String(to_node))
+	var patch: Dictionary = _visual_for(source).disconnection_patch(source, String(to_node), from_port)
 	if patch.is_empty():
 		return
 	_commit_property_change("Disconnect %s -> %s" % [from_node, to_node], source, patch["property"], patch["value"])
+
+func _on_add_pin_pressed(node: Resource) -> void:
+	var patch: Dictionary = _visual_for(node).add_pin_patch(node)
+	if patch.is_empty():
+		return
+	_commit_property_change("Add pin to %s" % node.id, node, patch["property"], patch["value"])
+
+func _on_remove_pin_pressed(node: Resource, row_index: int) -> void:
+	var patch: Dictionary = _visual_for(node).remove_pin_patch(node, row_index)
+	if patch.is_empty():
+		return
+	_commit_property_change("Remove pin from %s" % node.id, node, patch["property"], patch["value"])
 
 func _generate_unique_id(prefix: String) -> String:
 	var i := 1

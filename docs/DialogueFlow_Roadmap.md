@@ -844,7 +844,7 @@ have.
 - [ ] Align/Distribute selected nodes. (Top/Middle/Bottom/Left/Center/Right align, horizontal/vertical distribute — see Phase 12's Design Reference)
 - [x] Auto-refresh the graph view on Inspector property edits. (not originally on this list — a raw Inspector edit to a node's fields went through Godot's own property system, not `_commit_multi_change`, so the graph view went visually stale, and `dirty` never got set for an Inspector-only edit either; every node's `changed` signal — which Godot emits automatically after an Inspector-committed property edit — now triggers the same rebuild path structural edits already use)
 - [ ] Fix dangling id references left behind by node deletion. (found while testing: `_on_delete_nodes_request` only removes the deleted node itself from `current_graph.nodes` — anything still pointing at its id from elsewhere, e.g. another `SpeechNode`'s `response_ids`/`fallback_id`, an `EntryNode`/`ResponseNode`/`EventNode`/`RerouteNode`/`WaitForEventNode`'s `next_id`, a `ConditionNode`'s `true_id`/`false_id`, or a `RandomNode` branch's `target_id`, is left dangling until the next `validate()` run flags it as an error; deleting a node should clean up every other node's references to it in the same commit, the same way `remap_ids()` already clears out-of-selection references during duplicate/paste)
-- [ ] Graph node visual system refactor — Unreal Blueprint / Orchestrator-style per-connection pins. (documented in detail in the dedicated "Planned: Graph Node Visual System Refactor" section right after this phase — not yet scheduled or implemented)
+- [ ] Graph node visual system refactor — Unreal Blueprint / Orchestrator-style per-connection pins. (implemented for `SpeechNode`, with `Condition`/`Random` picking up labeled multi-row pins for free — see the dedicated "Planned: Graph Node Visual System Refactor" section right after this phase for the full writeup; left unchecked until a hands-on editor pass confirms drag-connect/retarget/add-remove-pin/undo all actually work, not just parse cleanly)
 
 ### Notes from building node duplication
 
@@ -880,9 +880,72 @@ have.
 
 # Planned: Graph Node Visual System Refactor (Unreal/Orchestrator-Inspired)
 
-**Status: documented only, not scheduled or implemented.** Parked here
-deliberately so the design doesn't get lost, without committing it to a
-specific phase yet.
+**Status: implemented for `SpeechNode` (responses + always-visible
+Fallback pin, add/remove pins), with `ConditionNode`/`RandomNode`
+picking up labeled multi-row pins as a side effect of the same generic
+machinery (still Inspector-only for add/remove, as before). Verified
+with `godot --headless --check-only` against every touched file;
+NOT YET manually exercised in a running editor (drag-connect,
+retarget-by-drag, add/remove pin, disconnect, and Undo/Redo on all of
+the above still need a hands-on pass before this is considered done).**
+
+## What actually got built
+
+- `NodeVisual.output_rows(node)` (new): one row per logical outgoing
+  connection, `{"label", "target_id", "removable"}`, in the same order
+  used both to draw the row and to number its connection port — default
+  wraps `outgoing_ids()` 1:1 (zero change for the 6 node types that never
+  had more than one connection anyway); `SpeechVisual` overrides it to
+  list one row per `response_ids` entry (blank ones included) plus a
+  fixed trailing Fallback row that's always present regardless of
+  response count; `ConditionVisual`/`RandomVisual` also override it now,
+  purely for labels ("True"/"False", "Weight N") — their `can_connect_to`
+  still returns `false` unconditionally, so add/remove pins stays
+  Inspector-only for those two, unchanged from before.
+- `NodeVisual.configure_slots()` gained a `row_count` parameter: row 0
+  (the description label) keeps its output pin only when there's just
+  one row total; otherwise it becomes input-only, and every real output
+  gets its own dedicated row/slot, added generically in
+  `graph_editor.gd::_rebuild()`. GraphEdit numbers connection ports over
+  *enabled* slots only, top to bottom, which is what keeps port numbers
+  lined up with `output_rows()` indices in both the single- and
+  multi-row cases with no extra offset bookkeeping.
+- `can_connect_to`/`connection_patch`/`disconnection_patch` all gained
+  an optional `port: int = 0` parameter, threaded through from
+  `GraphEdit`'s own `from_port`/`to_port` (previously received but
+  ignored everywhere). `SpeechVisual` uses it to resolve which specific
+  `response_ids` slot (or the Fallback field) a drag refers to, instead
+  of dispatching purely on the target node's type.
+- **Data model stays untouched, as planned**: a "+"-created pin is just
+  `response_ids.append("")` — a real, ordinary, already-representable
+  empty entry (Phase 11 already tolerates and flags this as an author
+  concern, same as any other unwired field mid-editing), not a separate
+  ephemeral tracking structure. Disconnecting a wired response blanks
+  its slot the same way rather than removing it, so a mid-drag
+  retarget (GraphEdit's native disconnect-then-immediately-reconnect
+  gesture) can never race against the array reshuffling out from under
+  it. The inline trash button (`NodeVisual.remove_pin_patch()`) is the
+  only thing that actually shrinks the array, and only ever appears on a
+  still-blank row.
+- `SpeechVisual.remap_ids()` (duplicate/copy/paste) simplified along the
+  way: every response slot now stays a slot across a duplicate/paste,
+  either re-pointed at the new id (if its target was part of the same
+  batch) or blanked, never dropped — preserves row order/count instead
+  of silently shrinking the array as the old version did.
+
+## Open questions this answered along the way
+
+- **Retargeting an already-wired response by dragging its pin**: works
+  for free once connection handling became port-aware — GraphEdit's own
+  disconnect-then-redrag gesture fires `disconnection_request` then
+  `connection_request` for the same port, and blanking (not removing)
+  on disconnect means the array never reshuffles mid-gesture.
+- **Scope**: shipped `SpeechNode` first as planned; `Condition`/`Random`
+  got the visual (labeled multi-row) half of the fix as a free side
+  effect of the generic machinery, with dynamic add/remove deliberately
+  left out for both, matching the original plan.
+
+## The problem
 
 ## The problem
 

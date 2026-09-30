@@ -12,19 +12,59 @@ static func describe(node: Resource) -> String:
 static func outgoing_ids(node: Resource) -> Array[String]:
 	return []
 
-static func configure_slots(gnode: GraphNode, node: Resource) -> void:
-	gnode.set_slot(0, true, 0, Color.WHITE, true, 0, Color.WHITE)
+# One row per logical outgoing connection, in the order they should be
+# drawn (row index == connection port index, in graph_editor.gd's
+# wire-drawing and connection-routing code). Each row is
+# {"label": String, "target_id": String, "removable": bool}. Default
+# wraps outgoing_ids() 1:1 with blank labels and nothing removable --
+# preserves today's single-row behavior for every type that doesn't
+# override this.
+static func output_rows(node: Resource) -> Array[Dictionary]:
+	var rows: Array[Dictionary] = []
+	for target_id in outgoing_ids(node):
+		rows.append({"label": "", "target_id": target_id, "removable": false})
+	return rows
+
+# Whether this node type supports adding/removing output rows from its
+# own body (a trailing "+" button, and a trash icon on any row
+# output_rows() marks removable). Default: no -- Inspector-only, as
+# today, for anything that doesn't opt in.
+static func supports_dynamic_pins() -> bool:
+	return false
+
+# Appends a new blank/unwired row. Returns the {property, value} patch to
+# commit, or {} if not supported.
+static func add_pin_patch(node: Resource) -> Dictionary:
+	return {}
+
+# Removes the row at `row_index` (only ever called on a row output_rows()
+# marked "removable"). Returns the {property, value} patch to commit, or
+# {} if not supported.
+static func remove_pin_patch(node: Resource, row_index: int) -> Dictionary:
+	return {}
+
+# Configures slot 0 (the node's description/header row, which also
+# doubles as its sole pin row when row_count <= 1). `row_count` is
+# output_rows(node).size() -- when it's more than 1, row 0's output side
+# is disabled here so each real output gets its own dedicated row instead
+# (added generically by graph_editor.gd, one per output_rows() entry).
+# GraphEdit numbers connection ports over enabled slots only, top to
+# bottom, so disabling row 0's output when there are dedicated rows below
+# it is what keeps port numbering lined up with output_rows() indices in
+# both cases -- no separate offset bookkeeping needed anywhere.
+static func configure_slots(gnode: GraphNode, node: Resource, row_count: int) -> void:
+	gnode.set_slot(0, true, 0, Color.WHITE, row_count <= 1, 0, Color.WHITE)
 
 static func color() -> Color:
 	return Color(0.35, 0.35, 0.38)
 
-static func can_connect_to(node: Resource, target: Resource) -> bool:
+static func can_connect_to(node: Resource, target: Resource, port: int = 0) -> bool:
 	return not (target is EntryNode) and not (target is ResponseNode)
 
-static func connection_patch(node: Resource, target: Resource) -> Dictionary:
+static func connection_patch(node: Resource, target: Resource, port: int = 0) -> Dictionary:
 	return {"property": "next_id", "value": target.id}
 
-static func disconnection_patch(node: Resource, target_id: String) -> Dictionary:
+static func disconnection_patch(node: Resource, target_id: String, port: int = 0) -> Dictionary:
 	if node.get("next_id") == target_id:
 		return {"property": "next_id", "value": ""}
 	return {}
