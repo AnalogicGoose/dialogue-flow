@@ -10,7 +10,8 @@ pub struct WaitForEventNode {
 
     #[export]
     pub id: GString,
-    #[export]
+    
+    #[var(usage_flags = [NO_EDITOR])]
     pub editor_position: Vector2,
 
     /// The event name this node waits for. Other event names are ignored.

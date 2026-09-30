@@ -12,8 +12,7 @@ pub struct EntryNode {
     #[export]
     pub id: GString,
 
-    /// Position in the future visual graph editor. Not runtime semantics.
-    #[export]
+    #[var(usage_flags = [NO_EDITOR])]
     pub editor_position: Vector2,
 
     /// Target node ID. Must not point at another `EntryNode` or a `ResponseNode`.

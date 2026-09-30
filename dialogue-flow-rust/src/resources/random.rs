@@ -23,7 +23,8 @@ pub struct RandomNode {
 
     #[export]
     pub id: GString,
-    #[export]
+
+    #[var(usage_flags = [NO_EDITOR])]
     pub editor_position: Vector2,
 
     #[export]
