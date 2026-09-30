@@ -34,3 +34,10 @@ static func disconnection_patch(node: Resource, target_id: String) -> Dictionary
 # INPUT pin (the new node would need an output to feed into it).
 static func can_be_source() -> bool:
 	return true
+
+# Rewrites this (already-duplicated) node's own outgoing edge fields via
+# id_map (old id -> new id). A target not in id_map pointed outside the
+# duplicated selection -- cleared, not left dangling or silently
+# reconnected into the original graph.
+static func remap_ids(node: Resource, id_map: Dictionary) -> void:
+	pass

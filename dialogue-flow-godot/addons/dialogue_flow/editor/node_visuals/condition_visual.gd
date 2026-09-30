@@ -20,3 +20,7 @@ static func can_connect_to(node: Resource, target: Resource) -> bool:
 # Labeled True/False pins (Blueprint Branch-node style, per the roadmap's
 # Design Reference) need a 2-row GraphNode body -- single generic output
 # slot for now, both edges still drawn correctly via outgoing_ids above.
+
+static func remap_ids(node: Resource, id_map: Dictionary) -> void:
+	node.true_id = id_map.get(node.true_id, "")
+	node.false_id = id_map.get(node.false_id, "")

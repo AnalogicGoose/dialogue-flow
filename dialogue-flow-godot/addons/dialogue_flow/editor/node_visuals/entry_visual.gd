@@ -9,3 +9,6 @@ static func configure_slots(gnode: GraphNode, node: Resource) -> void:
 
 static func color() -> Color:
 	return Color(0.25, 0.65, 0.3)
+
+static func remap_ids(node: Resource, id_map: Dictionary) -> void:
+	node.next_id = id_map.get(node.next_id, "")

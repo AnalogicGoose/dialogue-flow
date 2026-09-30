@@ -7,3 +7,10 @@ func _is_node_hover_valid(from_node: StringName, from_port: int, to_node: String
 	if editor == null:
 		return true
 	return editor.is_connection_valid(from_node, to_node)
+
+func _gui_input(event: InputEvent) -> void:
+	if event is InputEventKey and event.pressed and not event.echo and event.ctrl_pressed:
+		if event.keycode == KEY_D or event.keycode == KEY_W:
+			if editor != null:
+				editor.duplicate_selected_nodes()
+			accept_event()

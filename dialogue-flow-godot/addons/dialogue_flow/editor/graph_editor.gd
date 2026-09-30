@@ -37,6 +37,7 @@ var nodes_button: Button
 var current_graph: ConversationGraph
 var node_by_id: Dictionary = {}
 var pending_create_position: Vector2
+var pending_selection_ids: Array[String] = []
 # True once current_graph has any change committed through
 # _apply_entries_and_rebuild since it was last loaded or saved. Drives the
 # "unsaved changes" prompt on Close -- separate from Godot's own tab-dirty
@@ -219,6 +220,12 @@ func _rebuild():
 		for target_id in _visual_for(node).outgoing_ids(node):
 			if target_id != "" and node_by_id.has(target_id):
 				graph_edit.connect_node(node.id, 0, target_id, 0)
+
+	if not pending_selection_ids.is_empty():
+		for gnode in graph_edit.get_children():
+			if gnode is GraphNode:
+				gnode.selected = gnode.name in pending_selection_ids
+		pending_selection_ids = []
 
 func _validation_status_for(node_id: String, validation: Dictionary) -> Dictionary:
 	var needle := "'%s'" % node_id
@@ -429,6 +436,50 @@ func _on_delete_nodes_request(node_names: Array[StringName]) -> void:
 		if not to_delete.has(node.id):
 			new_nodes.append(node)
 	_commit_property_change("Delete %d node(s)" % node_names.size(), current_graph, "nodes", new_nodes)
+
+func duplicate_selected_nodes() -> void:
+	if current_graph == null:
+		return
+	var originals: Array[Resource] = []
+	for child in graph_edit.get_children():
+		if child is GraphNode and child.selected:
+			var node: Resource = node_by_id.get(String(child.name))
+			if node != null:
+				originals.append(node)
+	if originals.is_empty():
+		return
+
+	var id_map: Dictionary = {}
+	var duplicates: Array[Resource] = []
+	for original in originals:
+		var dup: Resource = original.duplicate(true)
+		var new_id := _generate_unique_id(_prefix_for_class(dup.get_class()))
+		node_by_id[new_id] = dup # reserved for this batch; overwritten by the next _rebuild()
+		id_map[original.id] = new_id
+		dup.id = new_id
+		dup.editor_position = original.editor_position + Vector2(40, 40)
+		duplicates.append(dup)
+
+	for dup in duplicates:
+		_visual_for(dup).remap_ids(dup, id_map)
+
+	var new_nodes: Array[Resource] = current_graph.nodes.duplicate()
+	new_nodes.append_array(duplicates)
+	var new_selection_ids: Array[String] = []
+	for dup in duplicates:
+		new_selection_ids.append(dup.id)
+	pending_selection_ids = new_selection_ids
+	_commit_multi_change(
+		"Duplicate %d node(s)" % duplicates.size(),
+		[[current_graph, "nodes", new_nodes]],
+		[[current_graph, "nodes", current_graph.nodes.duplicate()]]
+	)
+
+func _prefix_for_class(node_class: String) -> String:
+	for type_info in NODE_TYPES:
+		if type_info["class"] == node_class:
+			return type_info["prefix"]
+	return node_class.to_lower()
 
 func _on_connection_request(from_node: StringName, from_port: int, to_node: StringName, to_port: int) -> void:
 	var source: Resource = node_by_id.get(String(from_node))

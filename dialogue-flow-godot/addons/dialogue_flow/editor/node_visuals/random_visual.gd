@@ -14,3 +14,7 @@ static func color() -> Color:
 # which branch a drag-connect targets, so branches stay Inspector-edited.
 static func can_connect_to(node: Resource, target: Resource) -> bool:
 	return false
+
+static func remap_ids(node: Resource, id_map: Dictionary) -> void:
+	for b in node.branches:
+		b.target_id = id_map.get(b.target_id, "")

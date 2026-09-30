@@ -33,3 +33,11 @@ static func disconnection_patch(node: Resource, target_id: String) -> Dictionary
 	if node.fallback_id == target_id:
 		return {"property": "fallback_id", "value": ""}
 	return {}
+
+static func remap_ids(node: Resource, id_map: Dictionary) -> void:
+	var new_response_ids: Array[String] = []
+	for rid in node.response_ids:
+		if id_map.has(rid):
+			new_response_ids.append(id_map[rid])
+	node.response_ids = new_response_ids
+	node.fallback_id = id_map.get(node.fallback_id, "")

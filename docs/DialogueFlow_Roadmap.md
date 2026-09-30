@@ -824,8 +824,8 @@ have.
 ## Tasks
 
 - [x] Node search/create menu. (built in Phase 12 — right-click and drag-release-from-a-pin both open the same searchable, arrow-key-navigable popup)
-- [ ] Duplicate nodes. (Ctrl+D/Ctrl+W, Blueprint-style; a duplicated node must get a freshly generated `id` via `_generate_unique_id()`, never keep the source's — see the Pre-v1 Architecture Stress Test above)
-- [ ] Copy/paste. (same fresh-id rule as duplication)
+- [x] Duplicate nodes. (Ctrl+D/Ctrl+W, Blueprint-style; `NodeVisual.remap_ids()` — one override per node type — rewrites each duplicate's own edge fields via an old-id→new-id map, clearing anything that pointed outside the duplicated selection rather than leaving it dangling or silently reconnected to the original graph; duplicates get a freshly generated `id` via `_generate_unique_id()`, per the Pre-v1 Architecture Stress Test's fresh-id-on-duplicate finding, and are left selected afterward)
+- [ ] Copy/paste. (same fresh-id rule and `remap_ids()` machinery as duplication)
 - [ ] In-editor conversation preview/playtest. (not originally on this list — added after the Pre-v1 Architecture Stress Test above; cheap given `DialogueController` is already signal-driven and decoupled from `DialogueUI`)
 - [ ] Multi-select.
 - [ ] Delete selected graph region.
@@ -842,6 +842,32 @@ have.
 - [ ] Useful tooltips/documentation.
 - [ ] Straighten Connections action. (align connected nodes so a wire — or every wire in a selection — becomes a straight horizontal line; see Phase 12's Design Reference)
 - [ ] Align/Distribute selected nodes. (Top/Middle/Bottom/Left/Center/Right align, horizontal/vertical distribute — see Phase 12's Design Reference)
+
+### Notes from building node duplication
+
+- **`Array.map()` always returns a plain untyped `Array`, even when every
+  element it produces is a `String`.** Assigning its result directly to a
+  typed `Array[String]` var (`pending_selection_ids`) fails at runtime
+  with "Trying to assign an array of type 'Array' to a variable of type
+  'Array[String]'" — not a parse-time error, so it only surfaced when
+  actually running the editor. Fixed by building the typed array with an
+  explicit `for` loop instead, matching how every other typed array in
+  this codebase is already built.
+- **A one-line indentation slip silently breaks intent without any
+  error at all.** The post-rebuild reselection loop's
+  `pending_selection_ids = []` reset landed one indentation level too
+  deep (inside the `for gnode in ...` loop instead of after it), so it
+  cleared the pending list on the very first child checked — before any
+  actual `GraphNode` was ever reached. Duplication itself still worked
+  correctly; only the "leave the new copies selected" nicety silently
+  never fired. Caught by re-reading the applied diff line by line rather
+  than by any error message — worth remembering that a misplaced-by-one
+  indent in GDScript is not something `--check-only` (or any parser) will
+  ever catch, since it's still entirely valid syntax.
+- `duplicate(true)` (deep copy, not the default shallow `duplicate()`)
+  is required specifically for `RandomNode`, whose `branches` are
+  themselves sub-resources (`RandomBranch`) — a shallow duplicate would
+  leave the copy sharing the exact same branch instances as the original.
 
 ## Milestone
 
