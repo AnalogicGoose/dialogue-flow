@@ -38,6 +38,12 @@ var current_graph: ConversationGraph
 var node_by_id: Dictionary = {}
 var pending_create_position: Vector2
 var pending_selection_ids: Array[String] = []
+# Nodes captured by copy_selected_nodes(), already duplicate(true)'d at
+# copy time so later edits to the originals don't leak into the buffer.
+# Their own `id` fields are left untouched -- paste_nodes() only needs
+# them to stay internally consistent with each other, to remap edges
+# between pasted nodes the same way duplication does.
+var clipboard_nodes: Array[Resource] = []
 # True once current_graph has any change committed through
 # _apply_entries_and_rebuild since it was last loaded or saved. Drives the
 # "unsaved changes" prompt on Close -- separate from Godot's own tab-dirty
@@ -437,40 +443,80 @@ func _on_delete_nodes_request(node_names: Array[StringName]) -> void:
 			new_nodes.append(node)
 	_commit_property_change("Delete %d node(s)" % node_names.size(), current_graph, "nodes", new_nodes)
 
-func duplicate_selected_nodes() -> void:
-	if current_graph == null:
-		return
-	var originals: Array[Resource] = []
+func _get_selected_resource_nodes() -> Array[Resource]:
+	var result: Array[Resource] = []
 	for child in graph_edit.get_children():
 		if child is GraphNode and child.selected:
 			var node: Resource = node_by_id.get(String(child.name))
 			if node != null:
-				originals.append(node)
+				result.append(node)
+	return result
+
+func duplicate_selected_nodes() -> void:
+	var originals := _get_selected_resource_nodes()
 	if originals.is_empty():
+		return
+	_clone_and_commit(
+		originals,
+		func(o: Resource) -> Vector2: return o.editor_position + Vector2(40, 40),
+		"Duplicate %d node(s)" % originals.size()
+	)
+
+func copy_selected_nodes() -> void:
+	var originals := _get_selected_resource_nodes()
+	if originals.is_empty():
+		return
+	var buffer: Array[Resource] = []
+	for node in originals:
+		buffer.append(node.duplicate(true))
+	clipboard_nodes = buffer
+
+func paste_nodes() -> void:
+	if current_graph == null or clipboard_nodes.is_empty():
+		return
+	var centroid := Vector2.ZERO
+	for node in clipboard_nodes:
+		centroid += node.editor_position
+	centroid /= clipboard_nodes.size()
+	var paste_anchor := _graph_local_to_position_offset(graph_edit.get_local_mouse_position())
+	_clone_and_commit(
+		clipboard_nodes,
+		func(o: Resource) -> Vector2: return o.editor_position - centroid + paste_anchor,
+		"Paste %d node(s)" % clipboard_nodes.size()
+	)
+
+# Shared by duplicate and paste: clone each source Resource (deep, so
+# sub-resources like RandomBranch aren't shared with the source), give
+# each a freshly generated id, remap edges internal to this batch to the
+# new ids (clearing anything that pointed outside it), then commit the
+# whole thing as one atomic undo/redo step and leave the clones selected.
+# `position_for` maps each source to its clone's editor_position.
+func _clone_and_commit(sources: Array[Resource], position_for: Callable, action_label: String) -> void:
+	if current_graph == null or sources.is_empty():
 		return
 
 	var id_map: Dictionary = {}
-	var duplicates: Array[Resource] = []
-	for original in originals:
-		var dup: Resource = original.duplicate(true)
+	var clones: Array[Resource] = []
+	for source in sources:
+		var dup: Resource = source.duplicate(true)
 		var new_id := _generate_unique_id(_prefix_for_class(dup.get_class()))
 		node_by_id[new_id] = dup # reserved for this batch; overwritten by the next _rebuild()
-		id_map[original.id] = new_id
+		id_map[source.id] = new_id
 		dup.id = new_id
-		dup.editor_position = original.editor_position + Vector2(40, 40)
-		duplicates.append(dup)
+		dup.editor_position = position_for.call(source)
+		clones.append(dup)
 
-	for dup in duplicates:
+	for dup in clones:
 		_visual_for(dup).remap_ids(dup, id_map)
 
 	var new_nodes: Array[Resource] = current_graph.nodes.duplicate()
-	new_nodes.append_array(duplicates)
+	new_nodes.append_array(clones)
 	var new_selection_ids: Array[String] = []
-	for dup in duplicates:
+	for dup in clones:
 		new_selection_ids.append(dup.id)
 	pending_selection_ids = new_selection_ids
 	_commit_multi_change(
-		"Duplicate %d node(s)" % duplicates.size(),
+		action_label,
 		[[current_graph, "nodes", new_nodes]],
 		[[current_graph, "nodes", current_graph.nodes.duplicate()]]
 	)

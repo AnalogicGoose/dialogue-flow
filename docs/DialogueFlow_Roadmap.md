@@ -825,7 +825,7 @@ have.
 
 - [x] Node search/create menu. (built in Phase 12 — right-click and drag-release-from-a-pin both open the same searchable, arrow-key-navigable popup)
 - [x] Duplicate nodes. (Ctrl+D/Ctrl+W, Blueprint-style; `NodeVisual.remap_ids()` — one override per node type — rewrites each duplicate's own edge fields via an old-id→new-id map, clearing anything that pointed outside the duplicated selection rather than leaving it dangling or silently reconnected to the original graph; duplicates get a freshly generated `id` via `_generate_unique_id()`, per the Pre-v1 Architecture Stress Test's fresh-id-on-duplicate finding, and are left selected afterward)
-- [ ] Copy/paste. (same fresh-id rule and `remap_ids()` machinery as duplication)
+- [x] Copy/paste. (Ctrl+C/Ctrl+V; shares `_clone_and_commit()` with duplication — copy snapshots selected nodes via `duplicate(true)` into an in-memory clipboard buffer at copy time, decoupled from later edits to the originals; paste re-clones that buffer fresh each time, so pasting repeatedly never shares sub-resources across pastes, and drops the group at the mouse position, keeping the copied nodes' relative layout by re-centering on their original centroid)
 - [ ] In-editor conversation preview/playtest. (not originally on this list — added after the Pre-v1 Architecture Stress Test above; cheap given `DialogueController` is already signal-driven and decoupled from `DialogueUI`)
 - [ ] Multi-select.
 - [ ] Delete selected graph region.

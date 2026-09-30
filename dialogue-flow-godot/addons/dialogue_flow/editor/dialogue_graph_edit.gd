@@ -14,3 +14,11 @@ func _gui_input(event: InputEvent) -> void:
 			if editor != null:
 				editor.duplicate_selected_nodes()
 			accept_event()
+		elif event.keycode == KEY_C:
+			if editor != null:
+				editor.copy_selected_nodes()
+			accept_event()
+		elif event.keycode == KEY_V:
+			if editor != null:
+				editor.paste_nodes()
+			accept_event()
