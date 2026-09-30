@@ -728,13 +728,105 @@ Reached — New Graph, node creation (search popup), drag-to-connect, Inspector-
 
 ---
 
+# Pre-v1 Architecture Stress Test
+
+Before going deeper into Phase 13, the architecture was deliberately
+stress-tested against eleven external Godot/GDExtension projects chosen
+for overlapping engineering concerns — not to copy their scope, but to
+borrow their accumulated lessons before freezing decisions for v1.
+Primary references (deep investigation, including issues/PRs/history):
+Dialogic, Dialogue Manager, Godot Orchestrator, Questify, LimboAI.
+Specialist references (lighter treatment, one lesson each): Godot State
+Charts, Yarn Spinner, Dialogue Nodes, Sprouty Dialogs, Beehave. ("Quest
+Weaver" had no findable/credible repository and was dropped.)
+
+## Verdict
+
+No fundamental flaw was found in the graph model, runtime architecture,
+node identity, serialization format, or editor/Undo-Redo design. Several
+early decisions were independently validated by contrast with mature
+projects that hit the same problem first:
+
+- **Authored Resources stay read-only at runtime; all mutable state lives
+  on `DialogueController`** (`state`, `current_id`, `running`) — confirmed
+  by inspection: `enter()` never calls a mutating accessor on any node.
+  LimboAI's `BTPlayer.instantiate()` and Questify's `instantiate()` +
+  `duplicate(true)`-plus-manual-reference-rewrite both exist specifically
+  to retrofit this same guarantee after choosing to store mutable state
+  on their authored Resources in the first place. Dialogic's runtime, by
+  contrast, aliases *and writes into* its authored event objects
+  directly, and only gets away with it because its game handler is a
+  global singleton. **Frozen.**
+- **Every structural editor edit (move/create/delete/connect/disconnect)
+  funnels through one atomic `_commit_multi_change` do/undo path.** Godot
+  Orchestrator has no equivalent — its own
+  [issue #58](https://github.com/CraterCrash/godot-orchestrator/issues/58)
+  (open since March 2024) reports 7 of 13 graph operations that can't be
+  undone, with Ctrl+Z instead silently reverting unrelated scene edits.
+  **Frozen** — every future Phase 13 feature must keep going through this
+  same path, never a shortcut.
+- **Author-typed, stable `id: GString`** avoids problems others had to
+  retrofit: Dialogue Manager's line-number ids needed a bolted-on
+  `static_id` after users hit reference instability; Godot Orchestrator's
+  own maintainer flags its monotonic, never-reused int ids as an
+  imperfect strategy in a code comment. **Frozen.**
+- **Structured errors-vs-warnings validation, surfaced per-node** — ahead
+  of every reference checked. Dialogic has no static validation at all,
+  four years into its 2.0 rewrite; Questify only hard-gates
+  exactly-one-Start/-End at save time.
+- **String-id-addressed edges** (vs. object-reference edges, e.g.
+  Questify's `QuestEdge.from`/`to`) are more source-control/merge-friendly
+  — confirmed by direct contrast.
+
+## Concrete follow-ups folded into the phases below
+
+- Phase 13: when duplicate/copy-paste is implemented, the copied node's
+  `id` must be cleared and regenerated via the existing
+  `_generate_unique_id()` — never keep the source's id (Questify's
+  confirmed correct pattern).
+- Phase 13: an in-editor conversation previewer is worth adding —
+  independently converged on by two unrelated peer projects (Dialogue
+  Nodes, Sprouty Dialogs), and cheap given `DialogueController` is
+  already signal-driven and decoupled from `DialogueUI`.
+- Phase 15: add `cargo test` unit coverage for `graph::validate()` and
+  `DialogueController::enter()`'s core branches. This logic is pure Rust
+  with no GDExtension dependency to exercise it — LimboAI's ~38-file
+  native test suite is proof this is cheap, and this project's own
+  history (the Phase 6/11 illegal `fallback_id` bug) shows manual testing
+  alone catches things late.
+- Phase 16: document (and eventually test against) the actual supported
+  Godot version range for the built binary — currently implicit. Budget
+  real time for packaging generally: mature references (Orchestrator,
+  LimboAI) ship 10-20+ binary artifacts across multiple platforms via
+  dedicated per-platform CI, well beyond "build the `.so` and zip it."
+- Phase 14 (deferred, not a v1 requirement): reserve API shape for a
+  future `DialogueController` state save/load pair. Not needed for v1 (no
+  save-game feature is in scope), but Questify shipped two real bugs
+  ([issue #11](https://github.com/TheWalruzz/godot-questify/issues/11),
+  [PR #12](https://github.com/TheWalruzz/godot-questify/pull/12)) from
+  exactly this kind of state silently dropping across a serialize/
+  deserialize cycle it hadn't planned for.
+
+## What was deliberately NOT adopted
+
+Expression/conditional-language engines (Dialogic, Dialogue Manager),
+live reflection into arbitrary external game objects (Dialogue Manager),
+dynamic node-type discovery/registries (Orchestrator), custom binary
+serialization formats (Orchestrator), and any VM/bytecode compilation
+step (Yarn Spinner) were all considered and rejected — each solves a
+problem DialogueFlow's smaller, fixed-vocabulary graph model doesn't
+have.
+
+---
+
 # Phase 13 — Editor Quality of Life
 
 ## Tasks
 
 - [x] Node search/create menu. (built in Phase 12 — right-click and drag-release-from-a-pin both open the same searchable, arrow-key-navigable popup)
-- [ ] Duplicate nodes. (Ctrl+D/Ctrl+W, Blueprint-style)
-- [ ] Copy/paste.
+- [ ] Duplicate nodes. (Ctrl+D/Ctrl+W, Blueprint-style; a duplicated node must get a freshly generated `id` via `_generate_unique_id()`, never keep the source's — see the Pre-v1 Architecture Stress Test above)
+- [ ] Copy/paste. (same fresh-id rule as duplication)
+- [ ] In-editor conversation preview/playtest. (not originally on this list — added after the Pre-v1 Architecture Stress Test above; cheap given `DialogueController` is already signal-driven and decoupled from `DialogueUI`)
 - [ ] Multi-select.
 - [ ] Delete selected graph region.
 - [ ] Automatic unique IDs.
@@ -814,6 +906,18 @@ deliberate stay-in-order decision, not an oversight — asked directly
 whether to pull it forward, and the choice was to leave it here rather
 than jump ahead.
 
+## State Persistence (deferred)
+
+- [ ] Reserve API shape for a future `DialogueController` state
+      save/load pair (e.g. `get_state()`/`set_state()` around the
+      internal `state` map). Not a v1 requirement — no save-game feature
+      is in scope — but flagged by the Pre-v1 Architecture Stress Test:
+      Questify shipped two real bugs from state silently dropping across
+      a serialize/deserialize cycle it hadn't planned for
+      ([#11](https://github.com/TheWalruzz/godot-questify/issues/11),
+      [PR #12](https://github.com/TheWalruzz/godot-questify/pull/12)).
+      Cheap to leave room for now, easy to get wrong silently later.
+
 ## Documentation & Encapsulation
 
 - [ ] Review the Godot-facing public API.
@@ -837,6 +941,14 @@ Build conversations specifically designed to expose bad assumptions.
 
 ## Tests
 
+- [ ] Automated `cargo test` unit coverage for `graph::validate()` and
+      `DialogueController::enter()`'s core branches. Flagged HIGH
+      priority by the Pre-v1 Architecture Stress Test above: this logic
+      is pure Rust with no GDExtension dependency to exercise it, so it's
+      cheap to test directly rather than relying only on manual
+      `.tres`-graph sweeps (which the project's own history shows caught
+      at least one real bug — the Phase 6/11 illegal `fallback_id` — only
+      late).
 - [ ] Simple linear NPC.
 - [ ] Multi-choice NPC.
 - [ ] Branch-and-merge conversation.
@@ -884,6 +996,11 @@ Entry -> Speech -> Choice                              |
 
 ## Tasks
 
+- [ ] Document the supported Godot version range for the built binary
+      (a compatibility floor, relying on GDExtension ABI stability —
+      not a separate binary per Godot minor version; see the Pre-v1
+      Architecture Stress Test above, informed by LimboAI's and
+      Orchestrator's `.gdextension` compatibility declarations).
 - [ ] Clean Rust module structure.
 - [ ] Clean Godot addon structure.
 - [ ] Remove debugging code.
