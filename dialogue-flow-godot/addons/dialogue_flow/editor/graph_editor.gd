@@ -221,6 +221,8 @@ func _rebuild():
 		gnode.reset_size()
 		gnode.dragged.connect(_on_node_dragged.bind(node))
 		gnode.node_selected.connect(_on_node_selected.bind(node))
+		if not node.changed.is_connected(_on_node_resource_changed):
+			node.changed.connect(_on_node_resource_changed)
 
 	for node in current_graph.nodes:
 		for target_id in _visual_for(node).outgoing_ids(node):
@@ -254,6 +256,10 @@ func is_connection_valid(from_node: StringName, to_node: StringName) -> bool:
 
 func _on_node_dragged(from: Vector2, to: Vector2, node: Resource) -> void:
 	_commit_property_change("Move %s" % node.id, node, "editor_position", to)
+
+func _on_node_resource_changed() -> void:
+	dirty = true
+	call_deferred("_rebuild")
 
 func _on_node_selected(node: Resource) -> void:
 	EditorInterface.edit_resource(node)
