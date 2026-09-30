@@ -828,7 +828,7 @@ have.
 - [x] Copy/paste. (Ctrl+C/Ctrl+V; shares `_clone_and_commit()` with duplication — copy snapshots selected nodes via `duplicate(true)` into an in-memory clipboard buffer at copy time, decoupled from later edits to the originals; paste re-clones that buffer fresh each time, so pasting repeatedly never shares sub-resources across pastes, and drops the group at the mouse position, keeping the copied nodes' relative layout by re-centering on their original centroid)
 - [ ] In-editor conversation preview/playtest. (not originally on this list — added after the Pre-v1 Architecture Stress Test above; cheap given `DialogueController` is already signal-driven and decoupled from `DialogueUI`)
 - [x] Multi-select. (native `GraphEdit` behavior — ctrl/shift-click and rubber-band select all work with no extra code, same as Phase 12's zoom/pan; confirmed working correctly with group duplicate and group copy/paste)
-- [ ] Delete selected graph region. (likely already covered by the `delete_nodes_request` wiring from Phase 12, which already receives every currently-selected node's name — worth a quick confirmation pass rather than new work)
+- [x] Delete selected graph region. (confirmed — the existing `delete_nodes_request` wiring from Phase 12 already receives every currently-selected node's name in one signal, deleting the whole region in one undo step, no extra work needed)
 - [ ] Automatic unique IDs.
 - [ ] Search/rename speakers.
 - [ ] Search dialogue text.
