@@ -842,6 +842,9 @@ have.
 - [ ] Useful tooltips/documentation.
 - [ ] Straighten Connections action. (align connected nodes so a wire — or every wire in a selection — becomes a straight horizontal line; see Phase 12's Design Reference)
 - [ ] Align/Distribute selected nodes. (Top/Middle/Bottom/Left/Center/Right align, horizontal/vertical distribute — see Phase 12's Design Reference)
+- [x] Auto-refresh the graph view on Inspector property edits. (not originally on this list — a raw Inspector edit to a node's fields went through Godot's own property system, not `_commit_multi_change`, so the graph view went visually stale, and `dirty` never got set for an Inspector-only edit either; every node's `changed` signal — which Godot emits automatically after an Inspector-committed property edit — now triggers the same rebuild path structural edits already use)
+- [ ] Fix dangling id references left behind by node deletion. (found while testing: `_on_delete_nodes_request` only removes the deleted node itself from `current_graph.nodes` — anything still pointing at its id from elsewhere, e.g. another `SpeechNode`'s `response_ids`/`fallback_id`, an `EntryNode`/`ResponseNode`/`EventNode`/`RerouteNode`/`WaitForEventNode`'s `next_id`, a `ConditionNode`'s `true_id`/`false_id`, or a `RandomNode` branch's `target_id`, is left dangling until the next `validate()` run flags it as an error; deleting a node should clean up every other node's references to it in the same commit, the same way `remap_ids()` already clears out-of-selection references during duplicate/paste)
+- [ ] Graph node visual system refactor — Unreal Blueprint / Orchestrator-style per-connection pins. (documented in detail in the dedicated "Planned: Graph Node Visual System Refactor" section right after this phase — not yet scheduled or implemented)
 
 ### Notes from building node duplication
 
@@ -872,6 +875,127 @@ have.
 ## Milestone
 
 - [ ] Building a non-trivial conversation feels comfortable in Godot.
+
+---
+
+# Planned: Graph Node Visual System Refactor (Unreal/Orchestrator-Inspired)
+
+**Status: documented only, not scheduled or implemented.** Parked here
+deliberately so the design doesn't get lost, without committing it to a
+specific phase yet.
+
+## The problem
+
+Reported directly against the running editor: a `SpeechNode` with two
+`ResponseNode`s draws both wires fanning out of the exact same single
+pin, because every node today renders with one generic output slot
+(slot/port 0) regardless of how many logical outgoing connections it
+actually has (`SpeechNode.outgoing_ids()` returns
+`response_ids + [fallback_id]`, all drawn from that one shared point).
+This is the same gap Phase 12 already flagged and deferred for
+`Condition`/`Random` ("needs a multi-row `GraphNode` body, which wasn't
+built") — now confirmed visually confusing enough to fix properly
+rather than continue deferring. The ask is Unreal Blueprint/Orchestrator
+style: one row, one pin, per logical connection; the ability to add or
+remove a pin from the node body itself; and a Fallback pin that's always
+visible regardless of response count.
+
+## Related bug found alongside it
+
+Deleting a node does not clean up references to it from elsewhere.
+`_on_delete_nodes_request` only removes the deleted node itself from
+`current_graph.nodes` — any other node still pointing at its id (a
+`SpeechNode`'s `response_ids`/`fallback_id`, any single-`next_id` node,
+a `ConditionNode`'s `true_id`/`false_id`, a `RandomNode` branch's
+`target_id`) is left dangling, visible in the Inspector as a stale array
+entry and only ever caught after the fact by the next `validate()` run
+(shows up as a per-node error count). This should be fixed as part of
+the same pass, since the fix is the same shape as `remap_ids()`'s
+external-reference clearing already built for duplicate/paste — just
+triggered by delete instead of by clone, sweeping every remaining
+node's edge fields for the deleted id(s) and clearing any match, in the
+same atomic `_commit_multi_change` as the deletion itself.
+
+## What research into Orchestrator's actual implementation confirmed
+
+A background research pass specifically into
+[Godot Orchestrator](https://github.com/CraterCrash/godot-orchestrator)'s
+`GraphNode`/pin-editing code (`src/editor/graph/graph_node.h`/`.cpp`,
+`graph_panel.cpp`) found:
+
+- **It's plain native `GraphEdit`/`GraphNode`, no custom canvas drawing.**
+  `OrchestratorEditorGraphNode` extends `GraphNode` and uses its stock
+  slot API directly (`set_slot()`, `set_slot_type_left/right()`,
+  `set_slot_color_left/right()`) — the same calls DialogueFlow's
+  `node_visual.gd::configure_slots()` already makes once per node, just
+  called once per row instead. `_create_pin_widgets()` builds a plain
+  `HBoxContainer` per row, adds the row's pin `Control`s into it, then
+  `add_child(row)` on the `GraphNode` — the same Control-composition
+  pattern `graph_editor.gd::_rebuild()` already uses for its description
+  `Label`.
+- **Pins are resolved by identity (name/id), never by row position.**
+  Slots are rebuilt from scratch on every redraw and re-matched by name
+  (`get_input_port_slot(name)`/`get_output_port_slot(name)`, a linear
+  scan). Nothing is indexed by transient row/port position in the
+  underlying data model — this is exactly what DialogueFlow already
+  does at the node level (nodes reference each other by stable `id`,
+  rebuilt fresh every time); it would just need to extend one level
+  deeper, to pins within a node.
+- **Add-pin is a single trailing "+" button below all rows** (not one
+  per row), gated by an `is_add_pin_button_visible()` check. Clicking it
+  doesn't mutate anything directly — it emits a signal that bubbles up
+  to the graph panel, which calls `add_dynamic_pin()` on the underlying
+  node resource.
+- **Remove-pin is a right-click context-menu item** ("Remove pin"), not
+  an inline per-row button — corrects an initial assumption that this
+  would be a trash icon on each row.
+- **Always-visible pins need no special mechanism** — a node's pin
+  layout just unconditionally includes them first/last regardless of
+  how many dynamic pins exist in between.
+- **Connection routing genuinely uses per-pin port indices**: the
+  `connection_request`/`disconnection_request` handlers resolve the raw
+  integer `from_port`/`to_port` GraphEdit reports into a specific named
+  Pin object (`get_port_pin()`) before touching the data model.
+- **What NOT to copy**: adding/removing a pin does not appear to go
+  through Orchestrator's own `EditorUndoRedoManager` — it mutates the
+  resource directly and just marks the document dirty. This is the same
+  bug family already documented in the Pre-v1 Architecture Stress Test
+  above (issue #58/#1584: 7 of 13 graph operations aren't undoable in
+  Orchestrator). DialogueFlow should route add/remove-pin through the
+  existing `_commit_multi_change` atomic helper instead, exactly like
+  duplicate/copy/paste already do — not bypass it.
+
+## Adapted design sketch for DialogueFlow
+
+- **Scope it to `SpeechNode` first** (responses + a fixed trailing
+  Fallback row) — it's the concrete case that prompted this, and it's
+  the node type that actually needs dynamic add/remove. `ConditionNode`
+  (fixed True/False, 2 rows, no add/remove needed) and `RandomNode`
+  (dynamic branches, same shape as responses) are natural follow-ups
+  reusing the same new `NodeVisual` interface once it's proven out.
+  The other six node types (`Entry`/`Response`/`Event`/`WaitForEvent`/
+  `Reroute`/`Restart`/`End`) keep their current single generic slot —
+  they only ever have one outgoing edge, nothing to split into rows.
+- **Data model stays untouched.** A freshly-added pin is ephemeral,
+  editor-only state (never saved to the `.tres`, never a real
+  `response_ids` entry) until the user actually drags a wire to it —
+  only then does it become a real entry the normal way. This keeps
+  "editor layout data separated from runtime graph semantics" (a locked
+  architectural decision) intact, and avoids Phase 11's validator ever
+  seeing a transient not-yet-wired pin as a dangling-edge error.
+- **Input stays a single generic slot per node**, attached to row 0 —
+  only the output side needs splitting into multiple rows, since
+  incoming edges aren't typed by "which parameter" the way outgoing
+  ones are.
+
+## Open questions for whoever picks this up
+
+1. Should an already-wired response row stay drag-reconnectable (drag
+   its pin elsewhere to retarget it, standard Blueprint behavior), or
+   should retargeting only happen by deleting the wire and reconnecting
+   (simpler to implement, more clicks for a common edit)?
+2. Ship `SpeechNode` alone first and confirm it before extending to
+   `Condition`/`Random` in a follow-up, or do all three in one pass?
 
 ---
 
