@@ -9,7 +9,7 @@ pub struct EntryNode {
     base: Base<Resource>,
 
     /// Stable, author-assigned, graph-unique identifier.
-    #[export]
+    #[var(usage_flags = [DEFAULT, READ_ONLY])]
     pub id: GString,
 
     #[var(usage_flags = [NO_EDITOR])]

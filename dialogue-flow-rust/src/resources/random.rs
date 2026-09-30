@@ -21,7 +21,7 @@ pub struct RandomBranch {
 pub struct RandomNode {
     base: Base<Resource>,
 
-    #[export]
+    #[var(usage_flags = [DEFAULT, READ_ONLY])]
     pub id: GString,
 
     #[var(usage_flags = [NO_EDITOR])]

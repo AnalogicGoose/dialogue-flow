@@ -829,7 +829,7 @@ have.
 - [ ] In-editor conversation preview/playtest. (not originally on this list — added after the Pre-v1 Architecture Stress Test above; cheap given `DialogueController` is already signal-driven and decoupled from `DialogueUI`)
 - [x] Multi-select. (native `GraphEdit` behavior — ctrl/shift-click and rubber-band select all work with no extra code, same as Phase 12's zoom/pan; confirmed working correctly with group duplicate and group copy/paste)
 - [x] Delete selected graph region. (confirmed — the existing `delete_nodes_request` wiring from Phase 12 already receives every currently-selected node's name in one signal, deleting the whole region in one undo step, no extra work needed)
-- [ ] Automatic unique IDs.
+- [x] Automatic unique IDs. (creation/duplicate/paste already generated ids via `_generate_unique_id()`; closed the remaining loophole — `id` was still a freely hand-editable Inspector field that could type in a colliding id undetected until the next `validate()` run — by moving it from `#[export]` to `#[var(usage_flags = [DEFAULT, READ_ONLY])]` across all ten node resource types, same `NO_EDITOR`-adjacent pattern as `editor_position`: still visible, still fully get/settable from GDScript, just no longer hand-editable in the Inspector)
 - [ ] Search/rename speakers.
 - [ ] Search dialogue text.
 - [ ] Jump to node by ID.

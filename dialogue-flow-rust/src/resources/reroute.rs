@@ -8,7 +8,7 @@ use godot::prelude::*;
 pub struct RerouteNode {
     base: Base<Resource>,
 
-    #[export]
+    #[var(usage_flags = [DEFAULT, READ_ONLY])]
     pub id: GString,
     
     #[var(usage_flags = [NO_EDITOR])]
